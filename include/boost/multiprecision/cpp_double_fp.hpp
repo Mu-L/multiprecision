@@ -963,7 +963,7 @@ class cpp_double_fp_backend
             )
          };
 
-      constexpr cpp_double_fp_backend my_value_max_constexpr { arithmetic::two_hilo_sum(hi_part, lo_part) };
+      constexpr cpp_double_fp_backend my_value_max_constexpr(arithmetic::two_hilo_sum(hi_part, lo_part));
 
       static_assert
       (
@@ -991,7 +991,7 @@ class cpp_double_fp_backend
 
       static_assert
       (
-         eval_gt(my_value_min_constexpr, cpp_double_fp_backend { (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::min)() }),
+         eval_gt(my_value_min_constexpr, cpp_double_fp_backend((cpp_df_qf_detail::ccmath::numeric_limits<float_type>::min)())),
          "Error: minimum value is too small and must exceed the min of its constituent type"
       );
 
@@ -1008,7 +1008,7 @@ class cpp_double_fp_backend
 
       static_assert
       (
-         eval_lt(cpp_double_fp_backend { 1 } - my_value_eps_constexpr, cpp_double_fp_backend { 1 }),
+         eval_lt(cpp_double_fp_backend(1) - my_value_eps_constexpr, cpp_double_fp_backend(1)),
          "Error: epsilon value is too small and must be large enough to differentiate (1 - epsilon) from 1"
       );
 
@@ -1034,16 +1034,16 @@ class cpp_double_fp_backend
       // log(first) + log(1 + second/first), and use an order-2
       // approximation for the second logarithm.
 
-      constexpr float_type my_a { my_value_max().my_first() };
-      constexpr float_type my_b { my_value_max().my_second() };
+      constexpr float_type my_a(my_value_max().my_first());
+      constexpr float_type my_b(my_value_max().my_second());
 
       constexpr float_type dx { my_b / my_a };
 
       constexpr cpp_double_fp_backend
          my_value_logmax_constexpr
          {
-              cpp_double_fp_backend { cpp_df_qf_detail::ccmath::unsafe::log(my_a) }
-            + cpp_double_fp_backend { dx * (static_cast<float_type>(1.0F) - dx / static_cast<float_type>(2.0F)) }
+              cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log(my_a))
+            + cpp_double_fp_backend(dx * (static_cast<float_type>(1.0F) - dx / static_cast<float_type>(2.0F)))
          };
 
       return my_value_logmax_constexpr;
@@ -1058,16 +1058,16 @@ class cpp_double_fp_backend
       // log(first) + log(1 + second/first), and use an order-2
       // approximation for the second logarithm.
 
-      constexpr float_type my_a { my_value_min().my_first() };
-      constexpr float_type my_b { my_value_min().my_second() };
+      constexpr float_type my_a(my_value_min().my_first());
+      constexpr float_type my_b(my_value_min().my_second());
 
       constexpr float_type dx { my_b / my_a };
 
       constexpr cpp_double_fp_backend
          my_value_logmin_constexpr
          {
-              cpp_double_fp_backend { cpp_df_qf_detail::ccmath::unsafe::log(my_a) }
-            + cpp_double_fp_backend { dx * (static_cast<float_type>(1.0F) - dx / static_cast<float_type>(2.0F)) }
+              cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log(my_a))
+            + cpp_double_fp_backend(dx * (static_cast<float_type>(1.0F) - dx / static_cast<float_type>(2.0F)))
          };
 
       return my_value_logmin_constexpr;
