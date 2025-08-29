@@ -509,14 +509,14 @@ inline void eval_pow(T& result, const T& x, const T& a)
       return;
    }
 
-   const int fpc_x { eval_fpclassify(x) };
-   const int fpc_a { eval_fpclassify(a) };
-
-   if (fpc_a == FP_ZERO)
+   if (eval_is_zero(a))
    {
       result = si_type(1);
       return;
    }
+
+   const int fpc_x { eval_fpclassify(x) };
+   const int fpc_a { eval_fpclassify(a) };
 
    switch (fpc_x)
    {
