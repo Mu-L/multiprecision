@@ -1034,17 +1034,19 @@ class cpp_double_fp_backend
       // log(first) + log(1 + second/first), and use an order-2
       // approximation for the second logarithm.
 
-      constexpr float_type my_a(my_value_max().my_first());
-      constexpr float_type my_b(my_value_max().my_second());
+      constexpr cpp_double_fp_backend local_value_max = my_value_max();
+
+      constexpr float_type my_a(local_value_max.data.first);
+      constexpr float_type my_b(local_value_max.data.second);
 
       constexpr float_type dx { my_b / my_a };
 
       constexpr cpp_double_fp_backend
          my_value_logmax_constexpr
-         {
+         (
               cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log(my_a))
             + cpp_double_fp_backend(dx * (static_cast<float_type>(1.0F) - dx / static_cast<float_type>(2.0F)))
-         };
+         );
 
       return my_value_logmax_constexpr;
    }
@@ -1058,17 +1060,19 @@ class cpp_double_fp_backend
       // log(first) + log(1 + second/first), and use an order-2
       // approximation for the second logarithm.
 
-      constexpr float_type my_a(my_value_min().my_first());
-      constexpr float_type my_b(my_value_min().my_second());
+      constexpr cpp_double_fp_backend local_value_min = my_value_min();
+
+      constexpr float_type my_a(local_value_min.data.first);
+      constexpr float_type my_b(local_value_min.data.second);
 
       constexpr float_type dx { my_b / my_a };
 
       constexpr cpp_double_fp_backend
          my_value_logmin_constexpr
-         {
+         (
               cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log(my_a))
             + cpp_double_fp_backend(dx * (static_cast<float_type>(1.0F) - dx / static_cast<float_type>(2.0F)))
-         };
+         );
 
       return my_value_logmin_constexpr;
    }
