@@ -5,9 +5,9 @@
 
 // Some parts of this test file have been taken from the Boost.Decimal project.
 
-#define TEST_CPP_BIN_FLOAT
-#define TEST_CPP_DEC_FLOAT
+#if !defined(TEST_CPP_DOUBLE_FLOAT)
 #define TEST_CPP_DOUBLE_FLOAT
+#endif
 
 #include <boost/multiprecision/cpp_bin_float.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
