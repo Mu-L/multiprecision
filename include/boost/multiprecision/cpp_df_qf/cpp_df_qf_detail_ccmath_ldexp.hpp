@@ -17,6 +17,7 @@ namespace unsafe {
 
 namespace detail {
 
+// LCOV_EXCL_START
 template <class Real>
 constexpr auto ldexp_impl(Real arg, int expval) noexcept -> Real
 {
@@ -48,6 +49,7 @@ constexpr auto ldexp_impl(Real arg, int expval) noexcept -> Real
 
    return arg;
 }
+// LCOV_EXCL_STOP
 
 } // Namespace detail
 
@@ -56,7 +58,7 @@ constexpr auto ldexp(Real arg, int expval) -> Real
 {
    if (BOOST_MP_IS_CONST_EVALUATED(x))
    {
-      return detail::ldexp_impl<Real>(arg, expval);
+      return detail::ldexp_impl<Real>(arg, expval); // LCOV_EXCL_LINE
    }
    else
    {

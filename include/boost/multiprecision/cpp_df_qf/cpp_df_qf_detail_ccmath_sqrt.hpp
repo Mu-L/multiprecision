@@ -17,6 +17,7 @@ namespace unsafe {
 
 namespace detail {
 
+// LCOV_EXCL_START
 template <typename Real>
 constexpr auto sqrt_impl_2(Real x, Real s, Real s2) noexcept -> Real
 {
@@ -34,6 +35,7 @@ constexpr auto sqrt_impl(Real x) noexcept -> Real
 {
    return sqrt_impl_1(x, x > 1 ? x : Real(1));
 }
+// LCOV_EXCL_STOP
 
 } // namespace detail
 
@@ -42,7 +44,7 @@ constexpr auto sqrt(Real x) -> Real
 {
    if (BOOST_MP_IS_CONST_EVALUATED(x))
    {
-      return detail::sqrt_impl<Real>(x);
+      return detail::sqrt_impl<Real>(x); // LCOV_EXCL_LINE
    }
    else
    {

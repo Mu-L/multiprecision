@@ -19,6 +19,7 @@ namespace unsafe {
 
 namespace detail {
 
+// LCOV_EXCL_START
 template <typename Real>
 constexpr auto floor_pos_impl(Real arg) noexcept -> Real
 {
@@ -93,6 +94,7 @@ constexpr auto floor_impl(Real arg) noexcept -> Real
       return floor_neg_impl(arg);
    }
 }
+// LCOV_EXCL_STOP
 
 } // namespace detail
 
@@ -101,7 +103,7 @@ constexpr auto floor(Real x) -> Real
 {
    if (BOOST_MP_IS_CONST_EVALUATED(x))
    {
-      return detail::floor_impl<Real>(x);
+      return detail::floor_impl<Real>(x); // LCOV_EXCL_LINE
    }
    else
    {

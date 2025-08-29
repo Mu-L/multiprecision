@@ -17,6 +17,7 @@ namespace unsafe {
 
 namespace detail {
 
+// LCOV_EXCL_START
 template <typename Real>
 constexpr Real fma_impl(const Real x, const Real y, const Real z) noexcept
 {
@@ -38,6 +39,7 @@ constexpr Real fma_impl(const Real x, const Real y, const Real z) noexcept
    // If we can't use compiler intrinsics hope that -fma flag optimizes this call to fma instruction
    return (x * y) + z;
 }
+// LCOV_EXCL_STOP
 
 } // namespace detail
 
@@ -46,7 +48,7 @@ constexpr auto fma(Real x, Real y, Real z) -> Real
 {
    if (BOOST_MP_IS_CONST_EVALUATED(x))
    {
-      return detail::fma_impl(x, y, z);
+      return detail::fma_impl(x, y, z); // LCOV_EXCL_LINE
    }
    else
    {

@@ -30,6 +30,7 @@ namespace unsafe {
 
 namespace detail {
 
+// LCOV_EXCL_START
 template <class Real>
 constexpr auto exp_impl(Real x) noexcept -> Real
 {
@@ -148,6 +149,7 @@ constexpr auto log_impl(Real x) noexcept -> Real
 
    return s;
 }
+// LCOV_EXCL_STOP
 
 } // namespace detail
 
@@ -156,7 +158,7 @@ constexpr auto log(Real x) -> Real
 {
    if (BOOST_MP_IS_CONST_EVALUATED(x))
    {
-      return detail::log_impl<Real>(x);
+      return detail::log_impl<Real>(x); // LCOV_EXCL_LINE
    }
    else
    {

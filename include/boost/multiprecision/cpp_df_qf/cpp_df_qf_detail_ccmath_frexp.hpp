@@ -17,6 +17,7 @@ namespace unsafe {
 
 namespace detail {
 
+// LCOV_EXCL_START
 template <class Real>
 constexpr auto frexp_impl(Real arg, int* expptr) noexcept -> Real
 {
@@ -58,6 +59,7 @@ constexpr auto frexp_impl(Real arg, int* expptr) noexcept -> Real
 
    return ((!negative_arg) ? f : -f);
 }
+// LCOV_EXCL_STOP
 
 } // namespace detail
 
@@ -66,6 +68,7 @@ constexpr auto frexp(Real arg, int* expptr) -> Real
 {
    if (BOOST_MP_IS_CONST_EVALUATED(arg))
    {
+      // LCOV_EXCL_START
       if (arg == static_cast<Real>(0))
       {
          *expptr = 0;
@@ -76,6 +79,7 @@ constexpr auto frexp(Real arg, int* expptr) -> Real
       {
          return detail::frexp_impl(arg, expptr);
       }
+      // LCOV_EXCL_STOP
    }
    else
    {
