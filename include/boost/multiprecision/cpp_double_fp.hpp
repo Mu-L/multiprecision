@@ -1029,8 +1029,7 @@ class cpp_double_fp_backend
             cpp_df_qf_detail::ccmath::unsafe::ldexp
             #endif
             (
-               float_type { 1 },
-               int { 3 - my_digits }
+               float_type { 1 }, int { 3 - my_digits }
             )
          };
 
@@ -2772,14 +2771,18 @@ private:
 
    using digits2_type = digits2<my_multiprecision_backend_type::my_digits>;
 
+   static constexpr auto use_full_precision() noexcept -> bool
+   {
+      return ((digits2_type::value <= precision_type::value) || (precision_type::value <= 0));
+   }
+
 public:
    using precision_type = typename Policy::precision_type;
 
    using type =
-      typename std::conditional<
-         ((digits2_type::value <= precision_type::value) || (precision_type::value <= 0)),
-         digits2_type,             // This is the default case: Use full precision for RealType.
-         precision_type>::type;    // Here we find (and use) user-customized precision.
+      typename std::conditional<use_full_precision(),
+                                digits2_type,           // This is the default case: Use full precision for FloatingPointType.
+                                precision_type>::type;  // Here we find (and use) user-customized precision.
 };
 
 } } } // namespace boost::math::policies
