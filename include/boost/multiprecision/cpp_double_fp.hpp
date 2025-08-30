@@ -956,7 +956,11 @@ class cpp_double_fp_backend
       constexpr float_type
          lo_part
          {
+            #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+            cpp_df_qf_detail::ccmath::unsafe::ldexp_constexpr
+            #else
             cpp_df_qf_detail::ccmath::unsafe::ldexp
+            #endif
             (
                (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)(),
                -cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
@@ -982,7 +986,11 @@ class cpp_double_fp_backend
       constexpr float_type
          hi_part
          {
+            #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+            cpp_df_qf_detail::ccmath::unsafe::ldexp_constexpr
+            #else
             cpp_df_qf_detail::ccmath::unsafe::ldexp
+            #endif
             (
                (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::min)(),
                 cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
@@ -1005,7 +1013,15 @@ class cpp_double_fp_backend
       constexpr cpp_double_fp_backend
          my_value_eps_constexpr
          {
-            cpp_df_qf_detail::ccmath::unsafe::ldexp(float_type { 1 }, int { 3 - my_digits })
+            #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+            cpp_df_qf_detail::ccmath::unsafe::ldexp_constexpr
+            #else
+            cpp_df_qf_detail::ccmath::unsafe::ldexp
+            #endif
+            (
+               float_type { 1 },
+               int { 3 - my_digits }
+            )
          };
 
       static_assert

@@ -68,6 +68,12 @@ constexpr auto ldexp(Real arg, int expval) -> Real
    }
 }
 
+template <typename Real>
+constexpr auto ldexp_constexpr(Real arg, int expval) -> Real
+{
+   return detail::ldexp_impl<Real>(arg, expval);
+}
+
 } // namespace unsafe
 
 } } } } } // namespace boost::multiprecision::backends::cpp_df_qf_detail::ccmath
