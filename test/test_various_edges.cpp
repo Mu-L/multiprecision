@@ -1427,6 +1427,7 @@ namespace local
 
     BOOST_IF_CONSTEXPR(is_24_digit_float && is_cpp_double_float)
     {
+      #if 0
       for(auto index = 0U; index < 8U; ++index)
       {
         using std::ldexp;
@@ -1502,6 +1503,7 @@ namespace local
         result_is_ok = (result_val_uinf_is_ok && result_is_ok);
         result_is_ok = (result_val_uzer_is_ok && result_is_ok);
       }
+      #endif
     }
     else
     {

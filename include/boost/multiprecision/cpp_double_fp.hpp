@@ -1059,25 +1059,37 @@ class cpp_double_fp_backend
       // which we refactor as first * (1 + second / first).
 
       // We approximate log(first * (1 + second / first)) with
-      // log(first) + log(1 + second/first), and use an order-2
-      // approximation for the second logarithm.
+      // log(first) + log(1 + second/first), and use a value of
+      // zero for the second logarithm.
 
-      constexpr cpp_double_fp_backend local_value_max = my_value_max();
-
-      constexpr float_type my_a(local_value_max.data.first);
-      constexpr float_type my_b(local_value_max.data.second);
-
-      constexpr float_type dx { my_b / my_a };
+      constexpr float_type
+         first
+         {
+              (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)()
+            * (
+                   static_cast<float_type>(1.0F)
+                 - (
+                        static_cast<float_type>(1.5F)
+                      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+                      * cpp_df_qf_detail::ccmath::unsafe::sqrt_constexpr
+                      #else
+                      * cpp_df_qf_detail::ccmath::unsafe::sqrt
+                      #endif
+                        (
+                           cpp_df_qf_detail::ccmath::numeric_limits<float_type>::epsilon()
+                        )
+                   )
+              )
+         };
 
       constexpr cpp_double_fp_backend
          my_value_logmax_constexpr
          (
-              #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-              cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log_constexpr(my_a))
-              #else
-              cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log(my_a))
-              #endif
-            + cpp_double_fp_backend(dx * (static_cast<float_type>(1.0F) - dx / static_cast<float_type>(2.0F)))
+            #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+            cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log_constexpr(first))
+            #else
+            cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log(first))
+            #endif
          );
 
       return my_value_logmax_constexpr;
@@ -1089,25 +1101,31 @@ class cpp_double_fp_backend
       // which we refactor as first * (1 + second / first).
 
       // We approximate log(first * (1 + second / first)) with
-      // log(first) + log(1 + second/first), and use an order-2
-      // approximation for the second logarithm.
+      // log(first) + log(1 + second/first), and use a value of
+      // zero for the second logarithm.
 
-      constexpr cpp_double_fp_backend local_value_min = my_value_min();
-
-      constexpr float_type my_a(local_value_min.data.first);
-      constexpr float_type my_b(local_value_min.data.second);
-
-      constexpr float_type dx { my_b / my_a };
+      constexpr float_type
+         first
+         {
+            #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+            cpp_df_qf_detail::ccmath::unsafe::ldexp_constexpr
+            #else
+            cpp_df_qf_detail::ccmath::unsafe::ldexp
+            #endif
+            (
+               (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::min)(),
+                cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
+            )
+         };
 
       constexpr cpp_double_fp_backend
          my_value_logmin_constexpr
          (
-              #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-              cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log_constexpr(my_a))
-              #else
-              cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log(my_a))
-              #endif
-            + cpp_double_fp_backend(dx * (static_cast<float_type>(1.0F) - dx / static_cast<float_type>(2.0F)))
+            #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+            cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log_constexpr(first))
+            #else
+            cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log(first))
+            #endif
          );
 
       return my_value_logmin_constexpr;
