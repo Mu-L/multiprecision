@@ -1053,7 +1053,47 @@ class cpp_double_fp_backend
       return cpp_double_fp_backend(static_cast<float_type>(HUGE_VAL), float_type { 0.0F }); // conversion from double infinity OK
    }
 
+   #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+   static auto my_value_logmax() noexcept -> const cpp_double_fp_backend&
+   #else
    static constexpr auto my_value_logmax() noexcept -> cpp_double_fp_backend
+   #endif
+   {
+      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+      static const cpp_double_fp_backend my_value_logmax_constexpr = my_value_logmax_maker();
+      #else
+      constexpr cpp_double_fp_backend my_value_logmax_constexpr = my_value_logmax_maker();
+      #endif
+
+      return my_value_logmax_constexpr;
+   }
+
+   #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+   static auto my_value_logmin() noexcept -> const cpp_double_fp_backend&
+   #else
+   static constexpr auto my_value_logmin() noexcept -> cpp_double_fp_backend
+   #endif
+   {
+      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+      static const cpp_double_fp_backend my_value_logmin_constexpr = my_value_logmin_maker();
+      #else
+      constexpr cpp_double_fp_backend my_value_logmin_constexpr = my_value_logmin_maker();
+      #endif
+
+      return my_value_logmin_constexpr;
+   }
+
+ private:
+   rep_type data;
+
+   using cpp_bin_float_read_write_backend_type = boost::multiprecision::backends::cpp_bin_float<static_cast<unsigned>(my_digits), digit_base_2, void, int, cpp_df_qf_detail::ccmath::numeric_limits<float_type>::min_exponent, cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max_exponent>;
+   using cpp_bin_float_read_write_exp_type     = typename cpp_bin_float_read_write_backend_type::exponent_type;
+
+   using cpp_bin_float_read_write_type = boost::multiprecision::number<cpp_bin_float_read_write_backend_type, boost::multiprecision::et_off>;
+
+   auto rd_string(const char* pstr) -> bool;
+
+   static constexpr auto my_value_logmax_maker() noexcept -> cpp_double_fp_backend
    {
       // Here, we note that max is composed of (first + second),
       // which we refactor as first * (1 + second / first).
@@ -1092,10 +1132,19 @@ class cpp_double_fp_backend
             #endif
          );
 
+      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+      #else
+      static_assert
+      (
+         eval_gt(my_value_logmax_constexpr, cpp_double_fp_backend(1)),
+         "Error: logmax value is definitely incorrect"
+      );
+      #endif
+
       return my_value_logmax_constexpr;
    }
 
-   static constexpr auto my_value_logmin() noexcept -> cpp_double_fp_backend
+   static constexpr auto my_value_logmin_maker() noexcept -> cpp_double_fp_backend
    {
       // Here, we note that min is composed of (first + second),
       // which we refactor as first * (1 + second / first).
@@ -1128,18 +1177,17 @@ class cpp_double_fp_backend
             #endif
          );
 
+      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+      #else
+      static_assert
+      (
+         eval_lt(my_value_logmin_constexpr, cpp_double_fp_backend(-1)),
+         "Error: logmin value is definitely incorrect"
+      );
+      #endif
+
       return my_value_logmin_constexpr;
    }
-
- private:
-   rep_type data;
-
-   using cpp_bin_float_read_write_backend_type = boost::multiprecision::backends::cpp_bin_float<static_cast<unsigned>(my_digits), digit_base_2, void, int, cpp_df_qf_detail::ccmath::numeric_limits<float_type>::min_exponent, cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max_exponent>;
-   using cpp_bin_float_read_write_exp_type     = typename cpp_bin_float_read_write_backend_type::exponent_type;
-
-   using cpp_bin_float_read_write_type = boost::multiprecision::number<cpp_bin_float_read_write_backend_type, boost::multiprecision::et_off>;
-
-   auto rd_string(const char* pstr) -> bool;
 
    constexpr auto mul_unchecked(const cpp_double_fp_backend& v) -> void
    {

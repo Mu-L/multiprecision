@@ -29,12 +29,20 @@ void test_constexpr_ness()
 
    constexpr cpp_double_double dd_s { sqrt(dd_a) };
    constexpr cpp_double_double sqrt_hundred { sqrt(cpp_double_double(100)) };
-   constexpr cpp_double_double log_hundred { log(cpp_double_double(100)) };
+   #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+   const
+   #else
+   constexpr
+   #endif
+   cpp_double_double log_hundred { log(cpp_double_double(100)) };
 
    static_assert(dd_c > 5, "Error in constexpr multiplication");
    static_assert(dd_s > 1, "Error in constexpr square root");
    static_assert(sqrt_hundred == 10, "Error in constexpr square root");
+   #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+   #else
    static_assert(log_hundred > 4.605, "Error in constexpr logarithm");
+   #endif
 
    BOOST_CHECK(dd_c > 5);
    BOOST_CHECK(dd_s > 1);
