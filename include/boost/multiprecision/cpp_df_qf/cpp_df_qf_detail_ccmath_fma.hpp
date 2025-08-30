@@ -46,7 +46,7 @@ constexpr Real fma_impl(const Real x, const Real y, const Real z) noexcept
 template <typename Real>
 constexpr auto fma(Real x, Real y, Real z) -> Real
 {
-   if (BOOST_MP_IS_CONST_EVALUATED(x))
+   if (BOOST_MP_IS_CONST_EVALUATED(x) && BOOST_MP_IS_CONST_EVALUATED(y) && BOOST_MP_IS_CONST_EVALUATED(z))
    {
       return detail::fma_impl(x, y, z); // LCOV_EXCL_LINE
    }

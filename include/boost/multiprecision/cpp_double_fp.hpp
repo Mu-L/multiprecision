@@ -979,8 +979,8 @@ class cpp_double_fp_backend
       // Use the non-normalized minimum value, where the lower value
       // is "shifted" left in the sense of floating-point ldexp.
 
-      constexpr cpp_double_fp_backend
-         my_value_min_constexpr
+      constexpr float_type
+         hi_part
          {
             cpp_df_qf_detail::ccmath::unsafe::ldexp
             (
@@ -988,6 +988,8 @@ class cpp_double_fp_backend
                 cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
             )
          };
+
+      constexpr cpp_double_fp_backend my_value_min_constexpr { hi_part };
 
       static_assert
       (

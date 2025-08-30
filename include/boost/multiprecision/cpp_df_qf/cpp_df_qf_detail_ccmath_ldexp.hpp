@@ -56,7 +56,7 @@ constexpr auto ldexp_impl(Real arg, int expval) noexcept -> Real
 template <typename Real>
 constexpr auto ldexp(Real arg, int expval) -> Real
 {
-   if (BOOST_MP_IS_CONST_EVALUATED(x))
+   if (BOOST_MP_IS_CONST_EVALUATED(arg))
    {
       return detail::ldexp_impl<Real>(arg, expval); // LCOV_EXCL_LINE
    }
