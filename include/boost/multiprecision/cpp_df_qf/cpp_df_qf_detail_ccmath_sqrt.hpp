@@ -54,6 +54,12 @@ constexpr auto sqrt(Real x) -> Real
    }
 }
 
+template <typename Real>
+constexpr auto sqrt_constexpr(Real x) -> Real
+{
+   return detail::sqrt_impl<Real>(x);
+}
+
 } // namespace unsafe
 
 } } } } } // namespace boost::multiprecision::backends::cpp_df_qf_detail::ccmath

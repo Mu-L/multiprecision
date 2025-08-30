@@ -949,7 +949,17 @@ class cpp_double_fp_backend
               (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)()
             * (
                    static_cast<float_type>(1.0F)
-                 - static_cast<float_type>(1.5F) * cpp_df_qf_detail::ccmath::unsafe::sqrt(cpp_df_qf_detail::ccmath::numeric_limits<float_type>::epsilon())
+                 - (
+                        static_cast<float_type>(1.5F)
+                      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+                      * cpp_df_qf_detail::ccmath::unsafe::sqrt_constexpr
+                      #else
+                      * cpp_df_qf_detail::ccmath::unsafe::sqrt
+                      #endif
+                        (
+                           cpp_df_qf_detail::ccmath::numeric_limits<float_type>::epsilon()
+                        )
+                   )
               )
          };
 
@@ -1062,7 +1072,11 @@ class cpp_double_fp_backend
       constexpr cpp_double_fp_backend
          my_value_logmax_constexpr
          (
+              #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+              cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log_constexpr(my_a))
+              #else
               cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log(my_a))
+              #endif
             + cpp_double_fp_backend(dx * (static_cast<float_type>(1.0F) - dx / static_cast<float_type>(2.0F)))
          );
 
@@ -1088,7 +1102,11 @@ class cpp_double_fp_backend
       constexpr cpp_double_fp_backend
          my_value_logmin_constexpr
          (
+              #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+              cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log_constexpr(my_a))
+              #else
               cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log(my_a))
+              #endif
             + cpp_double_fp_backend(dx * (static_cast<float_type>(1.0F) - dx / static_cast<float_type>(2.0F)))
          );
 

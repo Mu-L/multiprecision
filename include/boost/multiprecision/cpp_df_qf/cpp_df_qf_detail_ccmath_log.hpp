@@ -168,6 +168,12 @@ constexpr auto log(Real x) -> Real
    }
 }
 
+template <typename Real>
+constexpr auto log_constexpr(Real x) -> Real
+{
+   return detail::log_impl<Real>(x);
+}
+
 } // namespace unsafe
 
 } } } } } // namespace boost::multiprecision::backends::cpp_df_qf_detail::ccmath
