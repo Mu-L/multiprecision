@@ -1060,12 +1060,12 @@ class cpp_double_fp_backend
    #endif
    {
       #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-      static const cpp_double_fp_backend my_value_logmax_constexpr = my_value_logmax_maker();
-      #else
-      constexpr cpp_double_fp_backend my_value_logmax_constexpr = my_value_logmax_maker();
-      #endif
+      static const cpp_double_fp_backend my_value_logmax_non_constexpr = my_value_logmax_maker();
 
-      return my_value_logmax_constexpr;
+      return my_value_logmax_non_constexpr;
+      #else
+      return my_value_logmax_maker();
+      #endif
    }
 
    #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
@@ -1075,12 +1075,12 @@ class cpp_double_fp_backend
    #endif
    {
       #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-      static const cpp_double_fp_backend my_value_logmin_constexpr = my_value_logmin_maker();
-      #else
-      constexpr cpp_double_fp_backend my_value_logmin_constexpr = my_value_logmin_maker();
-      #endif
+      static const cpp_double_fp_backend my_value_logmin_non_constexpr = my_value_logmin_maker();
 
-      return my_value_logmin_constexpr;
+      return my_value_logmin_non_constexpr;
+      #else
+      return my_value_logmin_maker();
+      #endif
    }
 
  private:
@@ -1093,7 +1093,11 @@ class cpp_double_fp_backend
 
    auto rd_string(const char* pstr) -> bool;
 
-   static constexpr auto my_value_logmax_maker() noexcept -> cpp_double_fp_backend
+   #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+   #else
+   constexpr
+   #endif
+   static auto my_value_logmax_maker() noexcept -> cpp_double_fp_backend
    {
       // Here, we note that max is composed of (first + second),
       // which we refactor as first * (1 + second / first).
@@ -1102,7 +1106,12 @@ class cpp_double_fp_backend
       // log(first) + log(1 + second/first), and use a value of
       // zero for the second logarithm.
 
-      constexpr float_type
+      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+      const
+      #else
+      constexpr
+      #endif
+      float_type
          first
          {
               (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)()
@@ -1122,11 +1131,16 @@ class cpp_double_fp_backend
               )
          };
 
-      constexpr cpp_double_fp_backend
-         my_value_logmax_constexpr
+      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+      const
+      #else
+      constexpr
+      #endif
+      cpp_double_fp_backend
+         my_value_logmax_constexpr_or_const
          (
             #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-            cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log_constexpr(first))
+            cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log_non_constexpr(first))
             #else
             cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log(first))
             #endif
@@ -1136,15 +1150,19 @@ class cpp_double_fp_backend
       #else
       static_assert
       (
-         eval_gt(my_value_logmax_constexpr, cpp_double_fp_backend(1)),
+         eval_gt(my_value_logmax_constexpr_or_const, cpp_double_fp_backend(1)),
          "Error: logmax value is definitely incorrect"
       );
       #endif
 
-      return my_value_logmax_constexpr;
+      return my_value_logmax_constexpr_or_const;
    }
 
-   static constexpr auto my_value_logmin_maker() noexcept -> cpp_double_fp_backend
+   #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+   #else
+   constexpr
+   #endif
+   static auto my_value_logmin_maker() noexcept -> cpp_double_fp_backend
    {
       // Here, we note that min is composed of (first + second),
       // which we refactor as first * (1 + second / first).
@@ -1153,7 +1171,12 @@ class cpp_double_fp_backend
       // log(first) + log(1 + second/first), and use a value of
       // zero for the second logarithm.
 
-      constexpr float_type
+      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+      const
+      #else
+      constexpr
+      #endif
+      float_type
          first
          {
             #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
@@ -1167,11 +1190,16 @@ class cpp_double_fp_backend
             )
          };
 
-      constexpr cpp_double_fp_backend
-         my_value_logmin_constexpr
+      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+      const
+      #else
+      constexpr
+      #endif
+      cpp_double_fp_backend
+         my_value_logmin_constexpr_or_const
          (
             #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-            cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log_constexpr(first))
+            cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log_non_constexpr(first))
             #else
             cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log(first))
             #endif
@@ -1181,12 +1209,12 @@ class cpp_double_fp_backend
       #else
       static_assert
       (
-         eval_lt(my_value_logmin_constexpr, cpp_double_fp_backend(-1)),
+         eval_lt(my_value_logmin_constexpr_or_const, cpp_double_fp_backend(-1)),
          "Error: logmin value is definitely incorrect"
       );
       #endif
 
-      return my_value_logmin_constexpr;
+      return my_value_logmin_constexpr_or_const;
    }
 
    constexpr auto mul_unchecked(const cpp_double_fp_backend& v) -> void
