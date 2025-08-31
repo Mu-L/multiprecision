@@ -1418,6 +1418,9 @@ namespace local
     }
 
     #ifdef BOOST_HAS_INT128
+
+    #define BOOST_MP_TEST_DISABLE_INT128_NON_FINITE
+
     constexpr bool is_24_digit_float { (std::numeric_limits<float>::digits == 24) };
 
     constexpr bool is_cpp_double_float
@@ -1427,7 +1430,6 @@ namespace local
 
     BOOST_IF_CONSTEXPR(is_24_digit_float && is_cpp_double_float)
     {
-      #if 0
       for(auto index = 0U; index < 8U; ++index)
       {
         using std::ldexp;
@@ -1487,23 +1489,37 @@ namespace local
         const auto result_val_uinf_is_ok = (u128_inf == static_cast<boost::uint128_type>(std::numeric_limits<float>::infinity()));
         const auto result_val_uzer_is_ok = (u128_zer == static_cast<boost::uint128_type>(0));
 
+        #if defined(BOOST_MP_TEST_DISABLE_INT128_NON_FINITE)
+        static_cast<void>(result_val_nan_is_ok);
+        static_cast<void>(result_val_inf_is_ok);
+        static_cast<void>(result_val_unan_is_ok);
+        static_cast<void>(result_val_uinf_is_ok);
+        #endif
+
+        #if !defined(BOOST_MP_TEST_DISABLE_INT128_NON_FINITE)
         BOOST_TEST(result_val_nan_is_ok);
         BOOST_TEST(result_val_inf_is_ok);
+        #endif
         BOOST_TEST(result_val_zer_is_ok);
 
+        #if !defined(BOOST_MP_TEST_DISABLE_INT128_NON_FINITE)
         BOOST_TEST(result_val_unan_is_ok);
         BOOST_TEST(result_val_uinf_is_ok);
+        #endif
         BOOST_TEST(result_val_uzer_is_ok);
 
+        #if !defined(BOOST_MP_TEST_DISABLE_INT128_NON_FINITE)
         result_is_ok = (result_val_nan_is_ok && result_is_ok);
         result_is_ok = (result_val_inf_is_ok && result_is_ok);
+        #endif
         result_is_ok = (result_val_zer_is_ok && result_is_ok);
 
+        #if !defined(BOOST_MP_TEST_DISABLE_INT128_NON_FINITE)
         result_is_ok = (result_val_unan_is_ok && result_is_ok);
         result_is_ok = (result_val_uinf_is_ok && result_is_ok);
+        #endif
         result_is_ok = (result_val_uzer_is_ok && result_is_ok);
       }
-      #endif
     }
     else
     {
@@ -1575,39 +1591,44 @@ namespace local
         const boost::int128_type n128_inf { static_cast<boost::int128_type>(flt_inf) };
         const boost::int128_type n128_zer { static_cast<boost::int128_type>(flt_zer) };
 
-        #define BOOST_MP_TEST_DISABLE_U128_NON_FINITE
-
-        #if !defined(BOOST_MP_TEST_DISABLE_U128_NON_FINITE)
         const boost::uint128_type u128_nan { static_cast<boost::uint128_type>(flt_nan) };
         const boost::uint128_type u128_inf { static_cast<boost::uint128_type>(flt_inf) };
-        #endif
         const boost::uint128_type u128_zer { static_cast<boost::uint128_type>(flt_zer) };
 
         const auto result_val_nan_is_ok = (n128_nan == static_cast<boost::int128_type>(std::numeric_limits<double>::quiet_NaN()));
         const auto result_val_inf_is_ok = (n128_inf == static_cast<boost::int128_type>(std::numeric_limits<double>::infinity()));
         const auto result_val_zer_is_ok = (n128_zer == static_cast<boost::int128_type>(0));
 
-        #if !defined(BOOST_MP_TEST_DISABLE_U128_NON_FINITE)
         const auto result_val_unan_is_ok = (u128_nan == static_cast<boost::uint128_type>(std::numeric_limits<double>::quiet_NaN()));
         const auto result_val_uinf_is_ok = (u128_inf == static_cast<boost::uint128_type>(std::numeric_limits<double>::infinity()));
-        #endif
         const auto result_val_uzer_is_ok = (u128_zer == static_cast<boost::uint128_type>(0));
 
+        #if defined(BOOST_MP_TEST_DISABLE_INT128_NON_FINITE)
+        static_cast<void>(result_val_nan_is_ok);
+        static_cast<void>(result_val_inf_is_ok);
+        static_cast<void>(result_val_unan_is_ok);
+        static_cast<void>(result_val_uinf_is_ok);
+        #endif
+
+        #if !defined(BOOST_MP_TEST_DISABLE_INT128_NON_FINITE)
         BOOST_TEST(result_val_nan_is_ok);
         BOOST_TEST(result_val_inf_is_ok);
+        #endif
         BOOST_TEST(result_val_zer_is_ok);
 
-        #if !defined(BOOST_MP_TEST_DISABLE_U128_NON_FINITE)
+        #if !defined(BOOST_MP_TEST_DISABLE_INT128_NON_FINITE)
         BOOST_TEST(result_val_unan_is_ok);
         BOOST_TEST(result_val_uinf_is_ok);
         #endif
         BOOST_TEST(result_val_uzer_is_ok);
 
+        #if !defined(BOOST_MP_TEST_DISABLE_INT128_NON_FINITE)
         result_is_ok = (result_val_nan_is_ok && result_is_ok);
         result_is_ok = (result_val_inf_is_ok && result_is_ok);
+        #endif
         result_is_ok = (result_val_zer_is_ok && result_is_ok);
 
-        #if !defined(BOOST_MP_TEST_DISABLE_U128_NON_FINITE)
+        #if !defined(BOOST_MP_TEST_DISABLE_INT128_NON_FINITE)
         result_is_ok = (result_val_unan_is_ok && result_is_ok);
         result_is_ok = (result_val_uinf_is_ok && result_is_ok);
         #endif

@@ -17,45 +17,41 @@ namespace unsafe {
 
 namespace detail {
 
-// LCOV_EXCL_START
-template <typename Real>
-constexpr Real fma_impl(const Real x, const Real y, const Real z) noexcept
+template <class T>
+constexpr auto fma_impl(T x, T y, T z) noexcept -> T
 {
-   #if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER) && !defined(__INTEL_LLVM_COMPILER)
-   BOOST_IF_CONSTEXPR (std::is_same<Real, float>::value)
-   {
-      return __builtin_fmaf(x, y, z);
-   }
-   else BOOST_IF_CONSTEXPR (std::is_same<Real, double>::value)
-   {
-      return __builtin_fma(x, y, z);
-   }
-   else BOOST_IF_CONSTEXPR (std::is_same<Real, long double>::value)
-   {
-      return __builtin_fmal(x, y, z);
-   }
-   #endif
+   // Default to the written-out operations ...
+   // ... and hope the compiler chooses FMA if available).
 
-   // If we can't use compiler intrinsics hope that -fma flag optimizes this call to fma instruction
    return (x * y) + z;
 }
-// LCOV_EXCL_STOP
+
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER) && !defined(__INTEL_LLVM_COMPILER)
+template <>
+constexpr auto fma_impl<float>(float x, float y, float z) noexcept -> float
+{
+  return __builtin_fmaf(x, y, z);
+}
+
+template <>
+constexpr auto fma_impl<double>(double x, double y, double z) noexcept -> double
+{
+  return __builtin_fma(x, y, z);
+}
+
+template <>
+constexpr auto fma_impl<long double>(long double x, long double y, long double z) noexcept -> long double
+{
+  return __builtin_fmal(x, y, z);
+}
+#endif
 
 } // namespace detail
 
 template <typename Real>
-constexpr auto fma(Real x, Real y, Real z) -> Real
+constexpr auto fma(Real x, Real y, Real z) noexcept -> Real
 {
-   if (BOOST_MP_IS_CONST_EVALUATED(x) && BOOST_MP_IS_CONST_EVALUATED(y) && BOOST_MP_IS_CONST_EVALUATED(z))
-   {
-      return detail::fma_impl(x, y, z); // LCOV_EXCL_LINE
-   }
-   else
-   {
-      using std::fma;
-
-      return fma(x, y, z);
-   }
+   return detail::fma_impl(x, y, z);
 }
 
 } // namespace unsafe

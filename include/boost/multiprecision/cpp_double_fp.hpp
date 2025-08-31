@@ -739,9 +739,9 @@ class cpp_double_fp_backend
          // Handle overflow by scaling down (and then back up) with the split.
 
          hc =
-            cpp_df_qf_detail::ccmath::unsafe::ldexp
+            cpp_df_qf_detail::ccmath::ldexp
             (
-               C - float_type { C - cpp_df_qf_detail::ccmath::unsafe::ldexp(C, -cpp_df_qf_detail::split_maker<float_type>::n_shl) },
+               C - float_type { C - cpp_df_qf_detail::ccmath::ldexp(C, -cpp_df_qf_detail::split_maker<float_type>::n_shl) },
                cpp_df_qf_detail::split_maker<float_type>::n_shl
             );
       }
@@ -759,9 +759,9 @@ class cpp_double_fp_backend
          // Handle overflow by scaling down (and then back up) with the split.
 
          hv =
-            cpp_df_qf_detail::ccmath::unsafe::ldexp
+            cpp_df_qf_detail::ccmath::ldexp
             (
-               v.data.first - float_type { v.data.first - cpp_df_qf_detail::ccmath::unsafe::ldexp(v.data.first, -cpp_df_qf_detail::split_maker<float_type>::n_shl) },
+               v.data.first - float_type { v.data.first - cpp_df_qf_detail::ccmath::ldexp(v.data.first, -cpp_df_qf_detail::split_maker<float_type>::n_shl) },
                cpp_df_qf_detail::split_maker<float_type>::n_shl
             );
       }
@@ -949,35 +949,21 @@ class cpp_double_fp_backend
               (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)()
             * (
                    static_cast<float_type>(1.0F)
-                 - (
-                        static_cast<float_type>(1.5F)
-                      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-                      * cpp_df_qf_detail::ccmath::unsafe::sqrt_constexpr
-                      #else
-                      * cpp_df_qf_detail::ccmath::unsafe::sqrt
-                      #endif
-                        (
-                           cpp_df_qf_detail::ccmath::numeric_limits<float_type>::epsilon()
-                        )
-                   )
+                 - static_cast<float_type>(1.5F) * cpp_df_qf_detail::ccmath::unsafe::sqrt(cpp_df_qf_detail::ccmath::numeric_limits<float_type>::epsilon())
               )
          };
 
       constexpr float_type
          lo_part
          {
-            #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-            cpp_df_qf_detail::ccmath::unsafe::ldexp_constexpr
-            #else
             cpp_df_qf_detail::ccmath::unsafe::ldexp
-            #endif
             (
                (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)(),
                -cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
             )
          };
 
-      constexpr cpp_double_fp_backend my_value_max_constexpr(arithmetic::two_hilo_sum(hi_part, lo_part));
+      constexpr cpp_double_fp_backend my_value_max_constexpr { arithmetic::two_hilo_sum(hi_part, lo_part) };
 
       static_assert
       (
@@ -993,25 +979,19 @@ class cpp_double_fp_backend
       // Use the non-normalized minimum value, where the lower value
       // is "shifted" left in the sense of floating-point ldexp.
 
-      constexpr float_type
-         hi_part
+      constexpr cpp_double_fp_backend
+         my_value_min_constexpr
          {
-            #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-            cpp_df_qf_detail::ccmath::unsafe::ldexp_constexpr
-            #else
             cpp_df_qf_detail::ccmath::unsafe::ldexp
-            #endif
             (
                (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::min)(),
                 cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
             )
          };
 
-      constexpr cpp_double_fp_backend my_value_min_constexpr { hi_part };
-
       static_assert
       (
-         eval_gt(my_value_min_constexpr, cpp_double_fp_backend((cpp_df_qf_detail::ccmath::numeric_limits<float_type>::min)())),
+         eval_gt(my_value_min_constexpr, cpp_double_fp_backend { (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::min)() }),
          "Error: minimum value is too small and must exceed the min of its constituent type"
       );
 
@@ -1023,19 +1003,12 @@ class cpp_double_fp_backend
       constexpr cpp_double_fp_backend
          my_value_eps_constexpr
          {
-            #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-            cpp_df_qf_detail::ccmath::unsafe::ldexp_constexpr
-            #else
-            cpp_df_qf_detail::ccmath::unsafe::ldexp
-            #endif
-            (
-               float_type { 1 }, int { 3 - my_digits }
-            )
+            cpp_df_qf_detail::ccmath::unsafe::ldexp(float_type { 1 }, int { 3 - my_digits })
          };
 
       static_assert
       (
-         eval_lt(cpp_double_fp_backend(1) - my_value_eps_constexpr, cpp_double_fp_backend(1)),
+         eval_lt(cpp_double_fp_backend { 1 } - my_value_eps_constexpr, cpp_double_fp_backend { 1 }),
          "Error: epsilon value is too small and must be large enough to differentiate (1 - epsilon) from 1"
       );
 
@@ -1052,36 +1025,6 @@ class cpp_double_fp_backend
       return cpp_double_fp_backend(static_cast<float_type>(HUGE_VAL), float_type { 0.0F }); // conversion from double infinity OK
    }
 
-   #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-   static auto my_value_logmax() noexcept -> const cpp_double_fp_backend&
-   #else
-   static constexpr auto my_value_logmax() noexcept -> cpp_double_fp_backend
-   #endif
-   {
-      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-      static const cpp_double_fp_backend my_value_logmax_non_constexpr = my_value_logmax_maker();
-
-      return my_value_logmax_non_constexpr;
-      #else
-      return my_value_logmax_maker();
-      #endif
-   }
-
-   #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-   static auto my_value_logmin() noexcept -> const cpp_double_fp_backend&
-   #else
-   static constexpr auto my_value_logmin() noexcept -> cpp_double_fp_backend
-   #endif
-   {
-      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-      static const cpp_double_fp_backend my_value_logmin_non_constexpr = my_value_logmin_maker();
-
-      return my_value_logmin_non_constexpr;
-      #else
-      return my_value_logmin_maker();
-      #endif
-   }
-
  private:
    rep_type data;
 
@@ -1091,130 +1034,6 @@ class cpp_double_fp_backend
    using cpp_bin_float_read_write_type = boost::multiprecision::number<cpp_bin_float_read_write_backend_type, boost::multiprecision::et_off>;
 
    auto rd_string(const char* pstr) -> bool;
-
-   #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-   #else
-   constexpr
-   #endif
-   static auto my_value_logmax_maker() noexcept -> cpp_double_fp_backend
-   {
-      // Here, we note that max is composed of (first + second),
-      // which we refactor as first * (1 + second / first).
-
-      // We approximate log(first * (1 + second / first)) with
-      // log(first) + log(1 + second/first), and use a value of
-      // zero for the second logarithm.
-
-      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-      const
-      #else
-      constexpr
-      #endif
-      float_type
-         first
-         {
-              (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)()
-            * (
-                   static_cast<float_type>(1.0F)
-                 - (
-                        static_cast<float_type>(1.5F)
-                      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-                      * cpp_df_qf_detail::ccmath::unsafe::sqrt_constexpr
-                      #else
-                      * cpp_df_qf_detail::ccmath::unsafe::sqrt
-                      #endif
-                        (
-                           cpp_df_qf_detail::ccmath::numeric_limits<float_type>::epsilon()
-                        )
-                   )
-              )
-         };
-
-      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-      const
-      #else
-      constexpr
-      #endif
-      cpp_double_fp_backend
-         my_value_logmax_constexpr_or_const
-         (
-            #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-            cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log_non_constexpr(first))
-            #else
-            cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log(first))
-            #endif
-         );
-
-      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-      #else
-      static_assert
-      (
-         eval_gt(my_value_logmax_constexpr_or_const, cpp_double_fp_backend(1)),
-         "Error: logmax value is definitely incorrect"
-      );
-      #endif
-
-      return my_value_logmax_constexpr_or_const;
-   }
-
-   #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-   #else
-   constexpr
-   #endif
-   static auto my_value_logmin_maker() noexcept -> cpp_double_fp_backend
-   {
-      // Here, we note that min is composed of (first + second),
-      // which we refactor as first * (1 + second / first).
-
-      // We approximate log(first * (1 + second / first)) with
-      // log(first) + log(1 + second/first), and use a value of
-      // zero for the second logarithm.
-
-      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-      const
-      #else
-      constexpr
-      #endif
-      float_type
-         first
-         {
-            #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-            cpp_df_qf_detail::ccmath::unsafe::ldexp_constexpr
-            #else
-            cpp_df_qf_detail::ccmath::unsafe::ldexp
-            #endif
-            (
-               (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::min)(),
-                cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
-            )
-         };
-
-      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-      const
-      #else
-      constexpr
-      #endif
-      cpp_double_fp_backend
-         my_value_logmin_constexpr_or_const
-         (
-            #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-            cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log_non_constexpr(first))
-            #else
-            cpp_double_fp_backend(cpp_df_qf_detail::ccmath::unsafe::log(first))
-            #endif
-         );
-
-      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-      #else
-      static_assert
-      (
-         eval_lt(my_value_logmin_constexpr_or_const, cpp_double_fp_backend(-1)),
-         "Error: logmin value is definitely incorrect"
-      );
-      #endif
-
-      return my_value_logmin_constexpr_or_const;
-   }
 
    constexpr auto mul_unchecked(const cpp_double_fp_backend& v) -> void
    {
@@ -1232,9 +1051,9 @@ class cpp_double_fp_backend
       {
          // Handle overflow by scaling down (and then back up) with the split.
 
-         C = data.first - cpp_df_qf_detail::ccmath::unsafe::ldexp(data.first, -cpp_df_qf_detail::split_maker<float_type>::n_shl);
+         C = data.first - cpp_df_qf_detail::ccmath::ldexp(data.first, -cpp_df_qf_detail::split_maker<float_type>::n_shl);
 
-         hu = cpp_df_qf_detail::ccmath::unsafe::ldexp(data.first - C, cpp_df_qf_detail::split_maker<float_type>::n_shl);
+         hu = cpp_df_qf_detail::ccmath::ldexp(data.first - C, cpp_df_qf_detail::split_maker<float_type>::n_shl);
       }
       else
       {
@@ -1266,9 +1085,9 @@ class cpp_double_fp_backend
       {
          // Handle overflow by scaling down (and then back up) with the split.
 
-         c = v.data.first - cpp_df_qf_detail::ccmath::unsafe::ldexp(v.data.first, -cpp_df_qf_detail::split_maker<float_type>::n_shl);
+         c = v.data.first - cpp_df_qf_detail::ccmath::ldexp(v.data.first, -cpp_df_qf_detail::split_maker<float_type>::n_shl);
 
-         hv = cpp_df_qf_detail::ccmath::unsafe::ldexp(v.data.first - c, cpp_df_qf_detail::split_maker<float_type>::n_shl);
+         hv = cpp_df_qf_detail::ccmath::ldexp(v.data.first - c, cpp_df_qf_detail::split_maker<float_type>::n_shl);
       }
       else
       {
@@ -1507,8 +1326,8 @@ constexpr auto eval_frexp(cpp_double_fp_backend<FloatingPointType>& result, cons
 
    int expptr { };
 
-   const local_float_type fhi { cpp_df_qf_detail::ccmath::unsafe::frexp(a.rep().first, &expptr) };
-   const local_float_type flo { cpp_df_qf_detail::ccmath::unsafe::ldexp(a.rep().second, -expptr) };
+   const local_float_type fhi { cpp_df_qf_detail::ccmath::frexp(a.rep().first, &expptr) };
+   const local_float_type flo { cpp_df_qf_detail::ccmath::ldexp(a.rep().second, -expptr) };
 
    if (v != nullptr)
    {
@@ -1524,8 +1343,8 @@ constexpr auto eval_ldexp(cpp_double_fp_backend<FloatingPointType>& result, cons
    using local_backend_type = cpp_double_fp_backend<FloatingPointType>;
    using local_float_type = typename local_backend_type::float_type;
 
-   const local_float_type fhi { cpp_df_qf_detail::ccmath::unsafe::ldexp(a.crep().first,  v) };
-   const local_float_type flo { cpp_df_qf_detail::ccmath::unsafe::ldexp(a.crep().second, v) };
+   const local_float_type fhi { cpp_df_qf_detail::ccmath::ldexp(a.crep().first,  v) };
+   const local_float_type flo { cpp_df_qf_detail::ccmath::ldexp(a.crep().second, v) };
 
    result.rep() = local_backend_type::arithmetic::normalize(fhi, flo);
 }
@@ -1536,7 +1355,7 @@ constexpr auto eval_floor(cpp_double_fp_backend<FloatingPointType>& result, cons
    using local_backend_type = cpp_double_fp_backend<FloatingPointType>;
    using local_float_type = typename local_backend_type::float_type;
 
-   const local_float_type fhi { cpp_df_qf_detail::ccmath::unsafe::floor(x.my_first()) };
+   const local_float_type fhi { cpp_df_qf_detail::ccmath::floor(x.my_first()) };
 
    if (fhi != x.my_first())
    {
@@ -1545,7 +1364,7 @@ constexpr auto eval_floor(cpp_double_fp_backend<FloatingPointType>& result, cons
    }
    else
    {
-      const local_float_type flo = { cpp_df_qf_detail::ccmath::unsafe::floor(x.my_second()) };
+      const local_float_type flo = { cpp_df_qf_detail::ccmath::floor(x.my_second()) };
 
       result.rep() = local_backend_type::arithmetic::normalize(fhi, flo);
    }
@@ -1619,7 +1438,7 @@ constexpr auto eval_sqrt(cpp_double_fp_backend<FloatingPointType>& result, const
    // TBD: Do we need any overflow/underflow guards when multiplying
    // by the split or when multiplying (hx * tx) and/or (hx * hx)?
 
-   const local_float_type c { cpp_df_qf_detail::ccmath::unsafe::sqrt(o.crep().first) };
+   const local_float_type c { cpp_df_qf_detail::ccmath::sqrt(o.crep().first) };
 
    local_float_type p { cpp_df_qf_detail::split_maker<local_float_type>::value * c };
 
@@ -1863,15 +1682,42 @@ constexpr auto eval_exp(cpp_double_fp_backend<FloatingPointType>& result, const 
       using local_float_type = typename double_float_type::float_type;
 
       // Get a local copy of the argument and force it to be positive.
+      const bool b_neg { x.isneg_unchecked() };
 
       const double_float_type xx { (!b_neg) ? x : -x };
 
       // Check the range of the input.
-      if (eval_lt(x, double_float_type::my_value_logmin()))
+      const double_float_type max_exp_input
+      {
+         []() -> local_float_type
+         {
+            local_float_type mx { };
+            eval_convert_to(&mx, double_float_type::my_value_max());
+
+            const local_float_type log_of_mx = cpp_df_qf_detail::ccmath::log(mx);
+
+            return log_of_mx;
+         }()
+      };
+
+      const double_float_type min_exp_input
+      {
+         []() -> local_float_type
+         {
+            local_float_type mn { };
+            eval_convert_to(&mn, double_float_type::my_value_min());
+
+            const local_float_type log_of_mn = cpp_df_qf_detail::ccmath::log(mn);
+
+            return log_of_mn;
+         }()
+      };
+
+      if (eval_lt(x, min_exp_input))
       {
          result = double_float_type(0U);
       }
-      else if (eval_gt(xx, double_float_type::my_value_logmax()))
+      else if (eval_gt(xx, max_exp_input))
       {
          result = double_float_type::my_value_inf();
       }
@@ -1988,15 +1834,42 @@ constexpr auto eval_exp(cpp_double_fp_backend<FloatingPointType>& result, const 
       using local_float_type  = typename double_float_type::float_type;
 
       // Get a local copy of the argument and force it to be positive.
+      const bool b_neg { x.isneg_unchecked() };
 
       const double_float_type xx { (!b_neg) ? x : -x };
 
       // Check the range of the input.
-      if (eval_lt(x, double_float_type::my_value_logmin()))
+      const double_float_type max_exp_input
+      {
+         []() -> local_float_type
+         {
+            local_float_type mx { };
+            eval_convert_to(&mx, double_float_type::my_value_max());
+
+            const local_float_type log_of_mx = cpp_df_qf_detail::ccmath::log(mx);
+
+            return log_of_mx;
+         }()
+      };
+
+      const double_float_type min_exp_input
+      {
+         []() -> local_float_type
+         {
+            local_float_type mn { };
+            eval_convert_to(&mn, double_float_type::my_value_min());
+
+            const local_float_type log_of_mn = cpp_df_qf_detail::ccmath::log(mn);
+
+            return log_of_mn;
+         }()
+      };
+
+      if (eval_lt(x, min_exp_input))
       {
          result = double_float_type(0U);
       }
-      else if (eval_gt(xx, double_float_type::my_value_logmax()))
+      else if (eval_gt(xx, max_exp_input))
       {
          result = double_float_type::my_value_inf();
       }
@@ -2118,11 +1991,37 @@ constexpr auto eval_exp(cpp_double_fp_backend<FloatingPointType>& result, const 
       const double_float_type xx { (!b_neg) ? x : -x };
 
       // Check the range of the input.
-      if (eval_lt(x, double_float_type::my_value_logmin()))
+      const double_float_type max_exp_input
+      {
+         []() -> local_float_type
+         {
+            local_float_type mx { };
+            eval_convert_to(&mx, double_float_type::my_value_max());
+
+            const local_float_type log_of_mx = cpp_df_qf_detail::ccmath::log(mx);
+
+            return log_of_mx;
+         }()
+      };
+
+      const double_float_type min_exp_input
+      {
+         []() -> local_float_type
+         {
+            local_float_type mn { };
+            eval_convert_to(&mn, double_float_type::my_value_min());
+
+            const local_float_type log_of_mn = cpp_df_qf_detail::ccmath::log(mn);
+
+            return log_of_mn;
+         }()
+      };
+
+      if (eval_lt(x, min_exp_input))
       {
          result = double_float_type(0U);
       }
-      else if (eval_gt(xx, double_float_type::my_value_logmax()))
+      else if (eval_gt(xx, max_exp_input))
       {
          result = double_float_type::my_value_inf();
       }
@@ -2256,7 +2155,7 @@ constexpr auto eval_log(cpp_double_fp_backend<FloatingPointType>& result, const 
       eval_frexp(x2, x, &n2);
 
       // Get initial estimate using the self-written, detail math function log.
-      const double_float_type s(cpp_df_qf_detail::ccmath::unsafe::log(x2.my_first()));
+      const double_float_type s(cpp_df_qf_detail::ccmath::log(x2.my_first()));
 
       double_float_type E { };
 
