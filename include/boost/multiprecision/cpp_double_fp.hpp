@@ -938,51 +938,44 @@ class cpp_double_fp_backend
       return e2;
    }
 
-   static constexpr auto my_value_max() noexcept -> cpp_double_fp_backend
+   static auto my_value_max() noexcept -> const cpp_double_fp_backend&
    {
       // Use the non-normalized sum of two maximum values, where the lower
       // value is "shifted" right in the sense of floating-point ldexp.
 
-      constexpr float_type
-         hi_part
-         {
-              (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)()
-            * (
-                   static_cast<float_type>(1.0F)
-                 - static_cast<float_type>(1.5F) * cpp_df_qf_detail::ccmath::unsafe::sqrt(cpp_df_qf_detail::ccmath::numeric_limits<float_type>::epsilon())
-              )
-         };
-
-      constexpr float_type
-         lo_part
-         {
-            cpp_df_qf_detail::ccmath::ldexp
+      static const cpp_double_fp_backend
+         my_value_max_constexpr
+         (
+            arithmetic::two_hilo_sum
             (
-               (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)(),
-               -cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
+               float_type
+                  {
+                       (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)()
+                     * (
+                            static_cast<float_type>(1.0F)
+                          - static_cast<float_type>(1.5F) * cpp_df_qf_detail::ccmath::unsafe::sqrt(cpp_df_qf_detail::ccmath::numeric_limits<float_type>::epsilon())
+                       )
+                  },
+               float_type
+                  {
+                     cpp_df_qf_detail::ccmath::ldexp
+                     (
+                        (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)(),
+                        -cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
+                     )
+                  }
             )
-         };
-
-      constexpr cpp_double_fp_backend my_value_max_constexpr(arithmetic::two_hilo_sum(hi_part, lo_part));
-
-      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-      #else
-      static_assert
-      (
-         eval_gt(my_value_max_constexpr, cpp_double_fp_backend(hi_part)),
-         "Error: maximum value is too small in relation to the maximum of its constituent type"
-      );
-      #endif
+         );
 
       return my_value_max_constexpr;
    }
 
-   static constexpr auto my_value_min() noexcept -> cpp_double_fp_backend
+   static auto my_value_min() noexcept -> const cpp_double_fp_backend&
    {
       // Use the non-normalized minimum value, where the lower value
       // is "shifted" left in the sense of floating-point ldexp.
 
-      constexpr cpp_double_fp_backend
+      static const cpp_double_fp_backend
          my_value_min_constexpr
          (
             cpp_df_qf_detail::ccmath::ldexp
@@ -992,34 +985,16 @@ class cpp_double_fp_backend
             )
          );
 
-      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-      #else
-      static_assert
-      (
-         eval_gt(my_value_min_constexpr, cpp_double_fp_backend((cpp_df_qf_detail::ccmath::numeric_limits<float_type>::min)())),
-         "Error: minimum value is too small and must exceed the min of its constituent type"
-      );
-      #endif
-
       return my_value_min_constexpr;
    }
 
-   static constexpr auto my_value_eps() noexcept -> cpp_double_fp_backend
+   static auto my_value_eps() noexcept -> const cpp_double_fp_backend&
    {
-      constexpr cpp_double_fp_backend
+      static const cpp_double_fp_backend
          my_value_eps_constexpr
          (
             cpp_df_qf_detail::ccmath::ldexp(float_type { 1 }, int { 3 - my_digits })
          );
-
-      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
-      #else
-      static_assert
-      (
-         eval_lt(cpp_double_fp_backend(1) - my_value_eps_constexpr, cpp_double_fp_backend(1)),
-         "Error: epsilon value is too small and must be large enough to differentiate (1 - epsilon) from 1"
-      );
-      #endif
 
       return my_value_eps_constexpr;
    }
