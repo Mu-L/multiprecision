@@ -956,7 +956,7 @@ class cpp_double_fp_backend
       constexpr float_type
          lo_part
          {
-            cpp_df_qf_detail::ccmath::unsafe::ldexp
+            cpp_df_qf_detail::ccmath::ldexp
             (
                (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)(),
                -cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
@@ -982,7 +982,7 @@ class cpp_double_fp_backend
       constexpr cpp_double_fp_backend
          my_value_min_constexpr
          {
-            cpp_df_qf_detail::ccmath::unsafe::ldexp
+            cpp_df_qf_detail::ccmath::ldexp
             (
                (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::min)(),
                 cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
@@ -1003,7 +1003,7 @@ class cpp_double_fp_backend
       constexpr cpp_double_fp_backend
          my_value_eps_constexpr
          {
-            cpp_df_qf_detail::ccmath::unsafe::ldexp(float_type { 1 }, int { 3 - my_digits })
+            cpp_df_qf_detail::ccmath::ldexp(float_type { 1 }, int { 3 - my_digits })
          };
 
       static_assert
@@ -1023,6 +1023,20 @@ class cpp_double_fp_backend
    static constexpr auto my_value_inf() noexcept -> cpp_double_fp_backend
    {
       return cpp_double_fp_backend(static_cast<float_type>(HUGE_VAL), float_type { 0.0F }); // conversion from double infinity OK
+   }
+
+   static auto my_value_logmax() -> const cpp_double_fp_backend&
+   {
+      static const cpp_double_fp_backend lg_max(float_type(cpp_df_qf_detail::ccmath::log(my_value_max().my_first())));
+
+      return lg_max;
+   }
+
+   static auto my_value_logmin() -> const cpp_double_fp_backend&
+   {
+      static const cpp_double_fp_backend lg_min(float_type(cpp_df_qf_detail::ccmath::log(my_value_min().my_first())));
+
+      return lg_min;
    }
 
  private:
@@ -1687,37 +1701,11 @@ constexpr auto eval_exp(cpp_double_fp_backend<FloatingPointType>& result, const 
       const double_float_type xx { (!b_neg) ? x : -x };
 
       // Check the range of the input.
-      const double_float_type max_exp_input
-      {
-         []() -> local_float_type
-         {
-            local_float_type mx { };
-            eval_convert_to(&mx, double_float_type::my_value_max());
-
-            const local_float_type log_of_mx = cpp_df_qf_detail::ccmath::log(mx);
-
-            return log_of_mx;
-         }()
-      };
-
-      const double_float_type min_exp_input
-      {
-         []() -> local_float_type
-         {
-            local_float_type mn { };
-            eval_convert_to(&mn, double_float_type::my_value_min());
-
-            const local_float_type log_of_mn = cpp_df_qf_detail::ccmath::log(mn);
-
-            return log_of_mn;
-         }()
-      };
-
-      if (eval_lt(x, min_exp_input))
+      if (eval_lt(x, double_float_type::my_value_logmin()))
       {
          result = double_float_type(0U);
       }
-      else if (eval_gt(xx, max_exp_input))
+      else if (eval_gt(xx, double_float_type::my_value_logmax()))
       {
          result = double_float_type::my_value_inf();
       }
@@ -1839,37 +1827,11 @@ constexpr auto eval_exp(cpp_double_fp_backend<FloatingPointType>& result, const 
       const double_float_type xx { (!b_neg) ? x : -x };
 
       // Check the range of the input.
-      const double_float_type max_exp_input
-      {
-         []() -> local_float_type
-         {
-            local_float_type mx { };
-            eval_convert_to(&mx, double_float_type::my_value_max());
-
-            const local_float_type log_of_mx = cpp_df_qf_detail::ccmath::log(mx);
-
-            return log_of_mx;
-         }()
-      };
-
-      const double_float_type min_exp_input
-      {
-         []() -> local_float_type
-         {
-            local_float_type mn { };
-            eval_convert_to(&mn, double_float_type::my_value_min());
-
-            const local_float_type log_of_mn = cpp_df_qf_detail::ccmath::log(mn);
-
-            return log_of_mn;
-         }()
-      };
-
-      if (eval_lt(x, min_exp_input))
+      if (eval_lt(x, double_float_type::my_value_logmin()))
       {
          result = double_float_type(0U);
       }
-      else if (eval_gt(xx, max_exp_input))
+      else if (eval_gt(xx, double_float_type::my_value_logmax()))
       {
          result = double_float_type::my_value_inf();
       }
@@ -1991,37 +1953,11 @@ constexpr auto eval_exp(cpp_double_fp_backend<FloatingPointType>& result, const 
       const double_float_type xx { (!b_neg) ? x : -x };
 
       // Check the range of the input.
-      const double_float_type max_exp_input
-      {
-         []() -> local_float_type
-         {
-            local_float_type mx { };
-            eval_convert_to(&mx, double_float_type::my_value_max());
-
-            const local_float_type log_of_mx = cpp_df_qf_detail::ccmath::log(mx);
-
-            return log_of_mx;
-         }()
-      };
-
-      const double_float_type min_exp_input
-      {
-         []() -> local_float_type
-         {
-            local_float_type mn { };
-            eval_convert_to(&mn, double_float_type::my_value_min());
-
-            const local_float_type log_of_mn = cpp_df_qf_detail::ccmath::log(mn);
-
-            return log_of_mn;
-         }()
-      };
-
-      if (eval_lt(x, min_exp_input))
+      if (eval_lt(x, double_float_type::my_value_logmin()))
       {
          result = double_float_type(0U);
       }
-      else if (eval_gt(xx, max_exp_input))
+      else if (eval_gt(xx, double_float_type::my_value_logmax()))
       {
          result = double_float_type::my_value_inf();
       }

@@ -15,43 +15,62 @@ namespace boost { namespace multiprecision { namespace backends { namespace cpp_
 
 namespace detail {
 
-template <class T>
-constexpr auto ldexp_impl(T arg, int expval) -> T
+// LCOV_EXCL_START
+template <class Real>
+constexpr auto ldexp_impl(Real arg, int expval) noexcept -> Real
 {
-   // Default to the regular ldexp function.
-   using std::ldexp;
+   constexpr Real two_pow_16_plus { static_cast<Real>(INT32_C(0x10000)) };
 
-   return ldexp(arg, expval);
+   while(expval > 16)
+   {
+      arg *= two_pow_16_plus;
+      expval -= 16;
+   }
+
+   while(expval < -16)
+   {
+      arg /= two_pow_16_plus;
+      expval += 16;
+   }
+
+   while(expval > 0)
+   {
+      arg *= 2;
+      --expval;
+   }
+
+   while(expval < 0)
+   {
+      arg /= 2;
+      ++expval;
+   }
+
+   return arg;
 }
+// LCOV_EXCL_STOP
 
 } // Namespace detail
 
 template <typename Real>
 constexpr auto ldexp(Real arg, int expval) -> Real
 {
-   return detail::ldexp_impl(arg, expval);
-}
+   if (BOOST_MP_IS_CONST_EVALUATED(arg))
+   {
+      return detail::ldexp_impl<Real>(arg, expval); // LCOV_EXCL_LINE
+   }
+   else
+   {
+      using std::ldexp;
 
-namespace unsafe {
+      return ldexp(arg, expval);
+   }
+}
 
 template <typename Real>
-constexpr auto ldexp(Real arg, int exp) noexcept -> Real
+constexpr auto ldexp_constexpr(Real arg, int expval) -> Real
 {
-   while(exp > 0)
-   {
-      arg *= 2;
-      --exp;
-   }
-   while(exp < 0)
-   {
-      arg /= 2;
-      ++exp;
-   }
-
-   return arg;
+   return detail::ldexp_impl<Real>(arg, expval);
 }
-
-} // namespace unsafe
 
 } } } } } // namespace boost::multiprecision::backends::cpp_df_qf_detail::ccmath
 
