@@ -963,13 +963,16 @@ class cpp_double_fp_backend
             )
          };
 
-      constexpr cpp_double_fp_backend my_value_max_constexpr { arithmetic::two_hilo_sum(hi_part, lo_part) };
+      constexpr cpp_double_fp_backend my_value_max_constexpr(arithmetic::two_hilo_sum(hi_part, lo_part));
 
+      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+      #else
       static_assert
       (
-         eval_gt(my_value_max_constexpr, cpp_double_fp_backend { hi_part }),
+         eval_gt(my_value_max_constexpr, cpp_double_fp_backend(hi_part)),
          "Error: maximum value is too small in relation to the maximum of its constituent type"
       );
+      #endif
 
       return my_value_max_constexpr;
    }
@@ -981,19 +984,22 @@ class cpp_double_fp_backend
 
       constexpr cpp_double_fp_backend
          my_value_min_constexpr
-         {
+         (
             cpp_df_qf_detail::ccmath::ldexp
             (
                (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::min)(),
                 cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
             )
-         };
+         );
 
+      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+      #else
       static_assert
       (
-         eval_gt(my_value_min_constexpr, cpp_double_fp_backend { (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::min)() }),
+         eval_gt(my_value_min_constexpr, cpp_double_fp_backend((cpp_df_qf_detail::ccmath::numeric_limits<float_type>::min)())),
          "Error: minimum value is too small and must exceed the min of its constituent type"
       );
+      #endif
 
       return my_value_min_constexpr;
    }
@@ -1002,27 +1008,30 @@ class cpp_double_fp_backend
    {
       constexpr cpp_double_fp_backend
          my_value_eps_constexpr
-         {
+         (
             cpp_df_qf_detail::ccmath::ldexp(float_type { 1 }, int { 3 - my_digits })
-         };
+         );
 
+      #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+      #else
       static_assert
       (
-         eval_lt(cpp_double_fp_backend { 1 } - my_value_eps_constexpr, cpp_double_fp_backend { 1 }),
+         eval_lt(cpp_double_fp_backend(1) - my_value_eps_constexpr, cpp_double_fp_backend(1)),
          "Error: epsilon value is too small and must be large enough to differentiate (1 - epsilon) from 1"
       );
+      #endif
 
       return my_value_eps_constexpr;
    }
 
    static constexpr auto my_value_nan() noexcept -> cpp_double_fp_backend
    {
-      return cpp_double_fp_backend(static_cast<float_type>(NAN), float_type { 0.0F });
+      return cpp_double_fp_backend(static_cast<float_type>(NAN), static_cast<float_type>(0.0F));
    }
 
    static constexpr auto my_value_inf() noexcept -> cpp_double_fp_backend
    {
-      return cpp_double_fp_backend(static_cast<float_type>(HUGE_VAL), float_type { 0.0F }); // conversion from double infinity OK
+      return cpp_double_fp_backend(static_cast<float_type>(HUGE_VAL), static_cast<float_type>(0.0F)); // conversion from double infinity OK
    }
 
    static auto my_value_logmax() -> const cpp_double_fp_backend&
