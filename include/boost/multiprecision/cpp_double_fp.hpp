@@ -952,7 +952,7 @@ class cpp_double_fp_backend
                        (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)()
                      * (
                             static_cast<float_type>(1.0F)
-                          - static_cast<float_type>(1.5F) * cpp_df_qf_detail::ccmath::unsafe::sqrt(cpp_df_qf_detail::ccmath::numeric_limits<float_type>::epsilon())
+                          - static_cast<float_type>(1.5F) * cpp_df_qf_detail::ccmath::sqrt(cpp_df_qf_detail::ccmath::numeric_limits<float_type>::epsilon())
                        )
                   },
                float_type

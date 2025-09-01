@@ -52,7 +52,7 @@ constexpr auto ldexp_impl(Real arg, int expval) noexcept -> Real
 } // Namespace detail
 
 template <typename Real>
-constexpr auto ldexp(Real arg, int expval) -> Real
+constexpr auto ldexp(Real arg, int expval) noexcept -> Real
 {
    if (BOOST_MP_IS_CONST_EVALUATED(arg))
    {
