@@ -52,12 +52,6 @@ constexpr auto sqrt(Real x) noexcept -> Real
    }
 }
 
-template <typename Real>
-constexpr auto sqrt_constexpr(Real x) -> Real
-{
-   return detail::sqrt_impl<Real>(x);
-}
-
 } } } } } // namespace boost::multiprecision::backends::cpp_df_qf_detail::ccmath
 
 #endif // BOOST_MP_CPP_DF_QF_DETAIL_CCMATH_SQRT_2023_01_07_HPP

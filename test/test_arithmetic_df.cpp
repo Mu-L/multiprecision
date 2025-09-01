@@ -30,14 +30,17 @@ auto test_constexpr_ness() noexcept -> void
 
    constexpr local_float_type dd_s { sqrt(dd_a) };
    constexpr local_float_type sqrt_hundred { sqrt(local_float_type(100)) };
+   constexpr local_float_type log_hundred { log(local_float_type(100)) };
 
    static_assert(dd_c > 5, "Error in constexpr multiplication");
    static_assert(dd_s > 1, "Error in constexpr square root");
    static_assert(sqrt_hundred == 10, "Error in constexpr square root");
+   static_assert(log_hundred > local_float_type(4.605L), "Error in constexpr logarithm");
 
    BOOST_CHECK(dd_c > 5);
    BOOST_CHECK(dd_s > 1);
    BOOST_CHECK(sqrt_hundred == 10);
+   BOOST_CHECK(log_hundred > local_float_type(4.605L));
 }
 
 int main()

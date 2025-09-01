@@ -943,26 +943,27 @@ class cpp_double_fp_backend
       // Use the non-normalized sum of two maximum values, where the lower
       // value is "shifted" right in the sense of floating-point ldexp.
 
-      return cpp_double_fp_backend
+      return
+         cpp_double_fp_backend
          (
             arithmetic::two_hilo_sum
             (
                float_type
-                  {
-                       (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)()
-                     * (
-                            static_cast<float_type>(1.0F)
-                          - static_cast<float_type>(1.5F) * cpp_df_qf_detail::ccmath::sqrt(cpp_df_qf_detail::ccmath::numeric_limits<float_type>::epsilon())
-                       )
-                  },
+               (
+                    (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)()
+                  * (
+                         static_cast<float_type>(1.0F)
+                       - static_cast<float_type>(1.5F) * cpp_df_qf_detail::ccmath::sqrt(cpp_df_qf_detail::ccmath::numeric_limits<float_type>::epsilon())
+                    )
+               ),
                float_type
-                  {
-                     cpp_df_qf_detail::ccmath::ldexp
-                     (
-                        (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)(),
-                        -cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
-                     )
-                  }
+               (
+                  cpp_df_qf_detail::ccmath::ldexp
+                  (
+                     (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)(),
+                     -cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
+                  )
+               )
             )
          );
    }
@@ -972,7 +973,8 @@ class cpp_double_fp_backend
       // Use the non-normalized minimum value, where the lower value
       // is "shifted" left in the sense of floating-point ldexp.
 
-      return cpp_double_fp_backend
+      return
+         cpp_double_fp_backend
          (
             float_type
             (
@@ -987,7 +989,8 @@ class cpp_double_fp_backend
 
    static constexpr auto my_value_eps() noexcept -> cpp_double_fp_backend
    {
-      return cpp_double_fp_backend
+      return
+         cpp_double_fp_backend
          (
             float_type(cpp_df_qf_detail::ccmath::ldexp(float_type { 1 }, int { 3 - my_digits }))
          );
@@ -1005,12 +1008,40 @@ class cpp_double_fp_backend
 
    static constexpr auto my_value_logmax() -> cpp_double_fp_backend
    {
-      return float_type(cpp_df_qf_detail::ccmath::log(my_value_max().my_first()));
+      return
+         cpp_double_fp_backend
+         (
+            cpp_df_qf_detail::ccmath::log
+            (
+               float_type
+               (
+                    (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)()
+                  * (
+                         static_cast<float_type>(1.0F)
+                       - static_cast<float_type>(1.5F) * cpp_df_qf_detail::ccmath::sqrt(cpp_df_qf_detail::ccmath::numeric_limits<float_type>::epsilon())
+                    )
+               )
+            )
+         );
    }
 
    static constexpr auto my_value_logmin() -> cpp_double_fp_backend
    {
-      return float_type(cpp_df_qf_detail::ccmath::log(my_value_min().my_first()));
+      return
+         cpp_double_fp_backend
+         (
+            cpp_df_qf_detail::ccmath::log
+            (
+               float_type
+               (
+                  cpp_df_qf_detail::ccmath::ldexp
+                  (
+                     (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::min)(),
+                      cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
+                  )
+               )
+            )
+         );
    }
 
  private:
