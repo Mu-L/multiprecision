@@ -51,7 +51,7 @@
 #include "performance_test_df.hpp"
 
 // cd /mnt/c/Users/ckorm/Documents/Ks/PC_Software/Test
-// g++ -std=gnu++14 -Wall -Wextra -O3 -I/mnt/c/ChrisGitRepos/boost_gsoc2021/multiprecision/performance -I/mnt/c/ChrisGitRepos/boost_gsoc2021/multiprecision/include -I/mnt/c/boost/boost_1_87_0 ./test.cpp -lquadmath -o test
+// g++ -std=gnu++14 -Wall -Wextra -O3 -I/mnt/c/ChrisGitRepos/modular_boost/multiprecision/performance -I/mnt/c/ChrisGitRepos/modular_boost/multiprecision/include -I/mnt/c/boost/boost_1_89_0 ./test.cpp -lquadmath -o test
 
 //
 // Keys in order are:

@@ -60,7 +60,15 @@
 #include <boost/multiprecision/float128.hpp>
 #endif
 #ifdef TEST_CPP_DOUBLE_FLOAT
+
+// When using very old GCC, categorically disable this test for cpp_double_fp_backend.
+// Do not attempt, at the moment, to track down the compiler's "internal failure".
+
+#if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+#else
 #include <boost/multiprecision/cpp_double_fp.hpp>
+#endif
+
 #endif
 
 #ifdef BOOST_MSVC
