@@ -296,9 +296,9 @@ class cpp_double_fp_backend
       data.second = static_cast<float_type>(0.0F);
       data.first  = static_cast<float_type>(u & flt_mask);
 
-      int u_index { 1 };
+      int n_index { 1 };
 
-      float_type p2_flt { cpp_df_qf_detail::pow2_maker<float_type>::value(std::numeric_limits<float_type>::digits) };
+      float_type p2_flt { cpp_df_qf_detail::ccmath::ldexp(float_type { 1 }, std::numeric_limits<float_type>::digits) };
 
       while (u > static_cast<local_unsigned_integral_type>(UINT8_C(0)))
       {
@@ -312,9 +312,9 @@ class cpp_double_fp_backend
 
          eval_add(*this, cpp_double_fp_backend(xhi));
 
-         ++u_index;
+         ++n_index;
 
-         p2_flt *= 2;
+         p2_flt = cpp_df_qf_detail::ccmath::ldexp(p2_flt, n_index);
       }
    }
 
