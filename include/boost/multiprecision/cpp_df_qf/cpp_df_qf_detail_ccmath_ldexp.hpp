@@ -66,12 +66,6 @@ constexpr auto ldexp(Real arg, int expval) noexcept -> Real
    }
 }
 
-template <typename Real>
-constexpr auto ldexp_constexpr(Real arg, int expval) -> Real
-{
-   return detail::ldexp_impl<Real>(arg, expval);
-}
-
 } } } } } // namespace boost::multiprecision::backends::cpp_df_qf_detail::ccmath
 
 #endif // BOOST_MP_CPP_DF_QF_DETAIL_CCMATH_LDEXP_2023_01_07_HPP

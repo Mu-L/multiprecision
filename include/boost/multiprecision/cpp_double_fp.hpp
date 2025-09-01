@@ -1670,8 +1670,6 @@ constexpr auto eval_exp(cpp_double_fp_backend<FloatingPointType>& result, const 
       using local_float_type = typename double_float_type::float_type;
 
       // Get a local copy of the argument and force it to be positive.
-      const bool b_neg { x.isneg_unchecked() };
-
       const double_float_type xx { (!b_neg) ? x : -x };
 
       // Check the range of the input.
@@ -1796,8 +1794,6 @@ constexpr auto eval_exp(cpp_double_fp_backend<FloatingPointType>& result, const 
       using local_float_type  = typename double_float_type::float_type;
 
       // Get a local copy of the argument and force it to be positive.
-      const bool b_neg { x.isneg_unchecked() };
-
       const double_float_type xx { (!b_neg) ? x : -x };
 
       // Check the range of the input.
