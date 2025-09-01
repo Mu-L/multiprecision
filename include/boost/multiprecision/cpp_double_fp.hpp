@@ -943,35 +943,29 @@ class cpp_double_fp_backend
       // Use the non-normalized sum of two maximum values, where the lower
       // value is "shifted" right in the sense of floating-point ldexp.
 
-      constexpr float_type
-         hi_part
-         {
-              (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)()
-            * (
-                   static_cast<float_type>(1.0F)
-                 - static_cast<float_type>(1.5F) * cpp_df_qf_detail::ccmath::unsafe::sqrt(cpp_df_qf_detail::ccmath::numeric_limits<float_type>::epsilon())
-              )
-         };
-
-      constexpr float_type
-         lo_part
-         {
-            cpp_df_qf_detail::ccmath::unsafe::ldexp
+      return
+         cpp_double_fp_backend
+         (
+            arithmetic::two_hilo_sum
             (
-               (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)(),
-               -cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
+               float_type
+               (
+                    (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)()
+                  * (
+                         static_cast<float_type>(1.0F)
+                       - static_cast<float_type>(1.5F) * cpp_df_qf_detail::ccmath::sqrt(cpp_df_qf_detail::ccmath::numeric_limits<float_type>::epsilon())
+                    )
+               ),
+               float_type
+               (
+                  cpp_df_qf_detail::ccmath::ldexp
+                  (
+                     (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)(),
+                     -cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
+                  )
+               )
             )
-         };
-
-      constexpr cpp_double_fp_backend my_value_max_constexpr { arithmetic::two_hilo_sum(hi_part, lo_part) };
-
-      static_assert
-      (
-         eval_gt(my_value_max_constexpr, cpp_double_fp_backend { hi_part }),
-         "Error: maximum value is too small in relation to the maximum of its constituent type"
-      );
-
-      return my_value_max_constexpr;
+         );
    }
 
    static constexpr auto my_value_min() noexcept -> cpp_double_fp_backend
@@ -979,50 +973,75 @@ class cpp_double_fp_backend
       // Use the non-normalized minimum value, where the lower value
       // is "shifted" left in the sense of floating-point ldexp.
 
-      constexpr cpp_double_fp_backend
-         my_value_min_constexpr
-         {
-            cpp_df_qf_detail::ccmath::unsafe::ldexp
+      return
+         cpp_double_fp_backend
+         (
+            float_type
             (
-               (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::min)(),
-                cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
+               cpp_df_qf_detail::ccmath::ldexp
+               (
+                  (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::min)(),
+                   cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
+               )
             )
-         };
-
-      static_assert
-      (
-         eval_gt(my_value_min_constexpr, cpp_double_fp_backend { (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::min)() }),
-         "Error: minimum value is too small and must exceed the min of its constituent type"
-      );
-
-      return my_value_min_constexpr;
+         );
    }
 
    static constexpr auto my_value_eps() noexcept -> cpp_double_fp_backend
    {
-      constexpr cpp_double_fp_backend
-         my_value_eps_constexpr
-         {
-            cpp_df_qf_detail::ccmath::unsafe::ldexp(float_type { 1 }, int { 3 - my_digits })
-         };
-
-      static_assert
-      (
-         eval_lt(cpp_double_fp_backend { 1 } - my_value_eps_constexpr, cpp_double_fp_backend { 1 }),
-         "Error: epsilon value is too small and must be large enough to differentiate (1 - epsilon) from 1"
-      );
-
-      return my_value_eps_constexpr;
+      return
+         cpp_double_fp_backend
+         (
+            float_type(cpp_df_qf_detail::ccmath::ldexp(float_type { 1 }, int { 3 - my_digits }))
+         );
    }
 
    static constexpr auto my_value_nan() noexcept -> cpp_double_fp_backend
    {
-      return cpp_double_fp_backend(static_cast<float_type>(NAN), float_type { 0.0F });
+      return cpp_double_fp_backend(static_cast<float_type>(NAN), static_cast<float_type>(0.0F));
    }
 
    static constexpr auto my_value_inf() noexcept -> cpp_double_fp_backend
    {
-      return cpp_double_fp_backend(static_cast<float_type>(HUGE_VAL), float_type { 0.0F }); // conversion from double infinity OK
+      return cpp_double_fp_backend(static_cast<float_type>(HUGE_VAL), static_cast<float_type>(0.0F)); // conversion from double infinity OK
+   }
+
+   static constexpr auto my_value_logmax() -> cpp_double_fp_backend
+   {
+      return
+         cpp_double_fp_backend
+         (
+            cpp_df_qf_detail::ccmath::log
+            (
+               float_type
+               (
+                    (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max)()
+                  * (
+                         static_cast<float_type>(1.0F)
+                       - static_cast<float_type>(1.5F) * cpp_df_qf_detail::ccmath::sqrt(cpp_df_qf_detail::ccmath::numeric_limits<float_type>::epsilon())
+                    )
+               )
+            )
+         );
+   }
+
+   static constexpr auto my_value_logmin() -> cpp_double_fp_backend
+   {
+      return
+         cpp_double_fp_backend
+         (
+            cpp_df_qf_detail::ccmath::log
+            (
+               float_type
+               (
+                  cpp_df_qf_detail::ccmath::ldexp
+                  (
+                     (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::min)(),
+                      cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
+                  )
+               )
+            )
+         );
    }
 
  private:
@@ -1682,42 +1701,14 @@ constexpr auto eval_exp(cpp_double_fp_backend<FloatingPointType>& result, const 
       using local_float_type = typename double_float_type::float_type;
 
       // Get a local copy of the argument and force it to be positive.
-      const bool b_neg { x.isneg_unchecked() };
-
       const double_float_type xx { (!b_neg) ? x : -x };
 
       // Check the range of the input.
-      const double_float_type max_exp_input
-      {
-         []() -> local_float_type
-         {
-            local_float_type mx { };
-            eval_convert_to(&mx, double_float_type::my_value_max());
-
-            const local_float_type log_of_mx = cpp_df_qf_detail::ccmath::log(mx);
-
-            return log_of_mx;
-         }()
-      };
-
-      const double_float_type min_exp_input
-      {
-         []() -> local_float_type
-         {
-            local_float_type mn { };
-            eval_convert_to(&mn, double_float_type::my_value_min());
-
-            const local_float_type log_of_mn = cpp_df_qf_detail::ccmath::log(mn);
-
-            return log_of_mn;
-         }()
-      };
-
-      if (eval_lt(x, min_exp_input))
+      if (eval_lt(x, double_float_type::my_value_logmin()))
       {
          result = double_float_type(0U);
       }
-      else if (eval_gt(xx, max_exp_input))
+      else if (eval_gt(xx, double_float_type::my_value_logmax()))
       {
          result = double_float_type::my_value_inf();
       }
@@ -1834,42 +1825,14 @@ constexpr auto eval_exp(cpp_double_fp_backend<FloatingPointType>& result, const 
       using local_float_type  = typename double_float_type::float_type;
 
       // Get a local copy of the argument and force it to be positive.
-      const bool b_neg { x.isneg_unchecked() };
-
       const double_float_type xx { (!b_neg) ? x : -x };
 
       // Check the range of the input.
-      const double_float_type max_exp_input
-      {
-         []() -> local_float_type
-         {
-            local_float_type mx { };
-            eval_convert_to(&mx, double_float_type::my_value_max());
-
-            const local_float_type log_of_mx = cpp_df_qf_detail::ccmath::log(mx);
-
-            return log_of_mx;
-         }()
-      };
-
-      const double_float_type min_exp_input
-      {
-         []() -> local_float_type
-         {
-            local_float_type mn { };
-            eval_convert_to(&mn, double_float_type::my_value_min());
-
-            const local_float_type log_of_mn = cpp_df_qf_detail::ccmath::log(mn);
-
-            return log_of_mn;
-         }()
-      };
-
-      if (eval_lt(x, min_exp_input))
+      if (eval_lt(x, double_float_type::my_value_logmin()))
       {
          result = double_float_type(0U);
       }
-      else if (eval_gt(xx, max_exp_input))
+      else if (eval_gt(xx, double_float_type::my_value_logmax()))
       {
          result = double_float_type::my_value_inf();
       }
@@ -1991,37 +1954,11 @@ constexpr auto eval_exp(cpp_double_fp_backend<FloatingPointType>& result, const 
       const double_float_type xx { (!b_neg) ? x : -x };
 
       // Check the range of the input.
-      const double_float_type max_exp_input
-      {
-         []() -> local_float_type
-         {
-            local_float_type mx { };
-            eval_convert_to(&mx, double_float_type::my_value_max());
-
-            const local_float_type log_of_mx = cpp_df_qf_detail::ccmath::log(mx);
-
-            return log_of_mx;
-         }()
-      };
-
-      const double_float_type min_exp_input
-      {
-         []() -> local_float_type
-         {
-            local_float_type mn { };
-            eval_convert_to(&mn, double_float_type::my_value_min());
-
-            const local_float_type log_of_mn = cpp_df_qf_detail::ccmath::log(mn);
-
-            return log_of_mn;
-         }()
-      };
-
-      if (eval_lt(x, min_exp_input))
+      if (eval_lt(x, double_float_type::my_value_logmin()))
       {
          result = double_float_type(0U);
       }
-      else if (eval_gt(xx, max_exp_input))
+      else if (eval_gt(xx, double_float_type::my_value_logmax()))
       {
          result = double_float_type::my_value_inf();
       }
