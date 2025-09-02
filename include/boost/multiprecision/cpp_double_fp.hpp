@@ -313,9 +313,17 @@ class cpp_double_fp_backend
          data.second = static_cast<float_type>(0.0F);
          data.first  = static_cast<float_type>(u & flt_mask);
 
-         constexpr float_type p2_factor_digits { cpp_df_qf_detail::ccmath::ldexp(static_cast<float_type>(1.0F), std::numeric_limits<float_type>::digits) };
+         constexpr float_type
+            p2_factor_digits
+            (
+               cpp_df_qf_detail::ccmath::ldexp
+               (
+                  static_cast<float_type>(1.0F),
+                  cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
+               )
+            );
 
-         float_type p2_factor { p2_factor_digits };
+         float_type p2_factor(p2_factor_digits);
 
          while (u > static_cast<local_unsigned_integral_type>(UINT8_C(0)))
          {
@@ -324,7 +332,7 @@ class cpp_double_fp_backend
             const float_type
                xhi
                {
-                  static_cast<float_type>(u & flt_mask) * p2_factor
+                  static_cast<float_type>(static_cast<float_type>(u & flt_mask) * p2_factor)
                };
 
             add_unchecked_limb(xhi);
@@ -1080,11 +1088,11 @@ class cpp_double_fp_backend
 
    constexpr auto add_unchecked_limb(const float_type v_first) -> void
    {
-      const rep_type thi_tlo { data.second, static_cast<float_type>(0.0F) };
+      const float_type thi { data.second };
 
       data = arithmetic::two_sum(data.first, v_first);
 
-      data = arithmetic::two_hilo_sum(data.first, data.second + thi_tlo.first);
+      data = arithmetic::two_hilo_sum(data.first, data.second + thi);
 
       data = arithmetic::two_hilo_sum(data.first, data.second);
    }
