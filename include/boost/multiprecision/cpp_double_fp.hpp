@@ -184,9 +184,9 @@ class cpp_double_fp_backend
          cpp_df_qf_detail::is_floating_point<float_type>::value
       && bool
          {
-               ((cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits ==  24) && std::numeric_limits<float_type>::is_specialized && std::numeric_limits<float_type>::is_iec559)
-            || ((cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits ==  53) && std::numeric_limits<float_type>::is_specialized && std::numeric_limits<float_type>::is_iec559)
-            || ((cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits ==  64) && std::numeric_limits<float_type>::is_specialized && std::numeric_limits<float_type>::is_iec559)
+               ((cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits ==  24) && cpp_df_qf_detail::ccmath::numeric_limits<float_type>::is_specialized && cpp_df_qf_detail::ccmath::numeric_limits<float_type>::is_iec559)
+            || ((cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits ==  53) && cpp_df_qf_detail::ccmath::numeric_limits<float_type>::is_specialized && cpp_df_qf_detail::ccmath::numeric_limits<float_type>::is_iec559)
+            || ((cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits ==  64) && cpp_df_qf_detail::ccmath::numeric_limits<float_type>::is_specialized && cpp_df_qf_detail::ccmath::numeric_limits<float_type>::is_iec559)
             ||  (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits == 113)
          }, "Error: float_type does not fulfill the backend requirements of cpp_double_fp_backend"
    );
@@ -304,7 +304,7 @@ class cpp_double_fp_backend
                (
                   static_cast<local_unsigned_integral_type>
                   (
-                     static_cast<local_unsigned_integral_type>(UINT8_C(1)) << static_cast<unsigned>(std::numeric_limits<float_type>::digits)
+                     static_cast<local_unsigned_integral_type>(UINT8_C(1)) << static_cast<unsigned>(cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits)
                   )
                   - static_cast<local_unsigned_integral_type>(UINT8_C(1))
                )
