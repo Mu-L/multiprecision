@@ -20,9 +20,9 @@ auto test_constexpr_ness() noexcept -> void
 
    constexpr local_float_type one { 1 };
 
-   static_assert(static_cast<int>(one) == 1, "Error: constexpr local_float_type construction failed");
+   static_assert(one == 1, "Error: constexpr local_float_type construction failed");
 
-   BOOST_CHECK(static_cast<int>(one) == 1);
+   BOOST_CHECK(one == 1);
 
    constexpr local_float_type dd_a { 1.23 };
    constexpr local_float_type dd_b { 4.56 };

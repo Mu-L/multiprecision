@@ -281,36 +281,56 @@ class cpp_double_fp_backend
       using local_unsigned_integral_type = UnsignedIntegralType;
 
       constexpr local_unsigned_integral_type
-         flt_mask
+         limb_mask
          {
-            static_cast<local_unsigned_integral_type>
-            (
-               static_cast<local_unsigned_integral_type>
-               (
-                  static_cast<local_unsigned_integral_type>(UINT8_C(1)) << static_cast<unsigned>(std::numeric_limits<float_type>::digits)
-               )
-               - static_cast<local_unsigned_integral_type>(UINT8_C(1))
-            )
+              local_unsigned_integral_type { local_unsigned_integral_type { 1 } << static_cast<unsigned>(cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits) }
+            - local_unsigned_integral_type { 1 }
          };
 
-      data.second = static_cast<float_type>(0.0F);
-      data.first  = static_cast<float_type>(u & flt_mask);
-
-      float_type p2_flt { cpp_df_qf_detail::ccmath::ldexp(float_type { 1 }, std::numeric_limits<float_type>::digits) };
-
-      while (u > static_cast<local_unsigned_integral_type>(UINT8_C(0)))
+      if (u <= limb_mask)
       {
-         u >>= static_cast<unsigned>(std::numeric_limits<float_type>::digits);
-
-         const float_type
-            xhi
+         data =
+         {
+            static_cast<float_type>(u),
+            static_cast<float_type>(0.0F)
+         };
+      }
+      else
+      {
+         constexpr local_unsigned_integral_type
+            flt_mask
             {
-               static_cast<float_type>(u & flt_mask) * p2_flt
+               static_cast<local_unsigned_integral_type>
+               (
+                  static_cast<local_unsigned_integral_type>
+                  (
+                     static_cast<local_unsigned_integral_type>(UINT8_C(1)) << static_cast<unsigned>(std::numeric_limits<float_type>::digits)
+                  )
+                  - static_cast<local_unsigned_integral_type>(UINT8_C(1))
+               )
             };
 
-         eval_add(*this, cpp_double_fp_backend(xhi));
+         data.second = static_cast<float_type>(0.0F);
+         data.first  = static_cast<float_type>(u & flt_mask);
 
-         p2_flt = cpp_df_qf_detail::ccmath::ldexp(p2_flt, std::numeric_limits<float_type>::digits);
+         constexpr float_type p2_factor_digits { cpp_df_qf_detail::ccmath::ldexp(static_cast<float_type>(1.0F), std::numeric_limits<float_type>::digits) };
+
+         float_type p2_factor { p2_factor_digits };
+
+         while (u > static_cast<local_unsigned_integral_type>(UINT8_C(0)))
+         {
+            u >>= static_cast<unsigned>(cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits);
+
+            const float_type
+               xhi
+               {
+                  static_cast<float_type>(u & flt_mask) * p2_factor
+               };
+
+            add_unchecked_limb(xhi);
+
+            p2_factor *= p2_factor_digits;
+         }
       }
    }
 
@@ -526,13 +546,7 @@ class cpp_double_fp_backend
          }
       }
 
-      const rep_type thi_tlo { arithmetic::two_sum(data.second, v.data.second) };
-
-      data = arithmetic::two_sum(data.first, v.data.first);
-
-      data = arithmetic::two_hilo_sum(data.first, data.second + thi_tlo.first);
-
-      data = arithmetic::two_hilo_sum(data.first, thi_tlo.second + data.second);
+      add_unchecked(v);
 
       return *this;
    }
@@ -1052,6 +1066,28 @@ class cpp_double_fp_backend
    using cpp_bin_float_read_write_type = boost::multiprecision::number<cpp_bin_float_read_write_backend_type, boost::multiprecision::et_off>;
 
    auto rd_string(const char* pstr) -> bool;
+
+   constexpr auto add_unchecked(const cpp_double_fp_backend& v) -> void
+   {
+      const rep_type thi_tlo { arithmetic::two_sum(data.second, v.data.second) };
+
+      data = arithmetic::two_sum(data.first, v.data.first);
+
+      data = arithmetic::two_hilo_sum(data.first, data.second + thi_tlo.first);
+
+      data = arithmetic::two_hilo_sum(data.first, thi_tlo.second + data.second);
+   }
+
+   constexpr auto add_unchecked_limb(const float_type v_first) -> void
+   {
+      const rep_type thi_tlo { data.second, static_cast<float_type>(0.0F) };
+
+      data = arithmetic::two_sum(data.first, v_first);
+
+      data = arithmetic::two_hilo_sum(data.first, data.second + thi_tlo.first);
+
+      data = arithmetic::two_hilo_sum(data.first, data.second);
+   }
 
    constexpr auto mul_unchecked(const cpp_double_fp_backend& v) -> void
    {
