@@ -277,67 +277,27 @@ class cpp_double_fp_backend
                                         &&  boost::multiprecision::detail::is_unsigned<UnsignedIntegralType>::value
                                         && (static_cast<int>(sizeof(UnsignedIntegralType) * 8u) > cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits))>::type const* = nullptr>
    constexpr cpp_double_fp_backend(UnsignedIntegralType u)
+      : data(static_cast<float_type>(u & cpp_df_qf_detail::float_mask<UnsignedIntegralType, float_type>()),
+             static_cast<float_type>(0.0F))
    {
       using local_unsigned_integral_type = UnsignedIntegralType;
 
-      constexpr local_unsigned_integral_type
-         limb_mask
-         {
-              local_unsigned_integral_type { local_unsigned_integral_type { 1 } << static_cast<unsigned>(cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits) }
-            - local_unsigned_integral_type { 1 }
-         };
-
-      if (u <= limb_mask)
+      if (u > cpp_df_qf_detail::float_mask<UnsignedIntegralType, float_type>())
       {
-         data =
-         {
-            static_cast<float_type>(u),
-            static_cast<float_type>(0.0F)
-         };
-      }
-      else
-      {
-         constexpr local_unsigned_integral_type
-            flt_mask
+         local_unsigned_integral_type
+            local_flt_mask
             {
-               static_cast<local_unsigned_integral_type>
-               (
-                  static_cast<local_unsigned_integral_type>
-                  (
-                     static_cast<local_unsigned_integral_type>(UINT8_C(1)) << static_cast<unsigned>(cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits)
-                  )
-                  - static_cast<local_unsigned_integral_type>(UINT8_C(1))
-               )
+               cpp_df_qf_detail::float_mask<local_unsigned_integral_type, float_type>()
             };
 
-         data.second = static_cast<float_type>(0.0F);
-         data.first  = static_cast<float_type>(u & flt_mask);
-
-         constexpr float_type
-            p2_factor_digits
-            (
-               cpp_df_qf_detail::ccmath::ldexp
-               (
-                  static_cast<float_type>(1.0F),
-                  cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits
-               )
-            );
-
-         float_type p2_factor(p2_factor_digits);
-
-         while (u > static_cast<local_unsigned_integral_type>(UINT8_C(0)))
+         for (int     index_mask_lsb =  cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits;
+                     (index_mask_lsb <  static_cast<int>(sizeof(local_unsigned_integral_type) * 8u))
+                  && (local_flt_mask != local_unsigned_integral_type { UINT8_C(0) });
+                      index_mask_lsb += cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits)
          {
-            u >>= static_cast<unsigned>(cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits);
+            local_flt_mask <<= static_cast<unsigned>(cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits);
 
-            const float_type
-               xhi
-               {
-                  static_cast<float_type>(static_cast<float_type>(u & flt_mask) * p2_factor)
-               };
-
-            add_unchecked_limb(xhi);
-
-            p2_factor *= p2_factor_digits;
+            add_unchecked_limb(static_cast<float_type>(u & local_flt_mask));
          }
       }
    }
