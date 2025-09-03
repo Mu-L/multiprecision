@@ -39,7 +39,7 @@ constexpr auto float_mask() noexcept -> UnsignedIntegralType
    using local_unsigned_integral_type = UnsignedIntegralType;
    using local_float_type = FloatType;
 
-   static_assert(static_cast<int>(sizeof(UnsignedIntegralType) * 8u) > static_cast<int>(cpp_df_qf_detail::ccmath::numeric_limits<local_float_type>::digits),
+   static_assert(static_cast<int>(sizeof(local_unsigned_integral_type) * 8u) > static_cast<int>(cpp_df_qf_detail::ccmath::numeric_limits<local_float_type>::digits),
                  "Error: this function is intended for unsigned integral type wider than the float type.");
 
    return
