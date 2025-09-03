@@ -184,9 +184,9 @@ class cpp_double_fp_backend
          cpp_df_qf_detail::is_floating_point<float_type>::value
       && bool
          {
-               ((cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits ==  24) && std::numeric_limits<float_type>::is_specialized && std::numeric_limits<float_type>::is_iec559)
-            || ((cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits ==  53) && std::numeric_limits<float_type>::is_specialized && std::numeric_limits<float_type>::is_iec559)
-            || ((cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits ==  64) && std::numeric_limits<float_type>::is_specialized && std::numeric_limits<float_type>::is_iec559)
+               ((cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits ==  24) && cpp_df_qf_detail::ccmath::numeric_limits<float_type>::is_specialized && cpp_df_qf_detail::ccmath::numeric_limits<float_type>::is_iec559)
+            || ((cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits ==  53) && cpp_df_qf_detail::ccmath::numeric_limits<float_type>::is_specialized && cpp_df_qf_detail::ccmath::numeric_limits<float_type>::is_iec559)
+            || ((cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits ==  64) && cpp_df_qf_detail::ccmath::numeric_limits<float_type>::is_specialized && cpp_df_qf_detail::ccmath::numeric_limits<float_type>::is_iec559)
             ||  (cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits == 113)
          }, "Error: float_type does not fulfill the backend requirements of cpp_double_fp_backend"
    );
@@ -277,41 +277,28 @@ class cpp_double_fp_backend
                                         &&  boost::multiprecision::detail::is_unsigned<UnsignedIntegralType>::value
                                         && (static_cast<int>(sizeof(UnsignedIntegralType) * 8u) > cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits))>::type const* = nullptr>
    constexpr cpp_double_fp_backend(UnsignedIntegralType u)
+      : data(static_cast<float_type>(u & cpp_df_qf_detail::float_mask<UnsignedIntegralType, float_type>()),
+             static_cast<float_type>(0.0F))
    {
       using local_unsigned_integral_type = UnsignedIntegralType;
 
-      constexpr local_unsigned_integral_type
-         flt_mask
-         {
-            static_cast<local_unsigned_integral_type>
-            (
-               static_cast<local_unsigned_integral_type>
-               (
-                  static_cast<local_unsigned_integral_type>(UINT8_C(1)) << static_cast<unsigned>(std::numeric_limits<float_type>::digits)
-               )
-               - static_cast<local_unsigned_integral_type>(UINT8_C(1))
-            )
-         };
-
-      data.second = static_cast<float_type>(0.0F);
-      data.first  = static_cast<float_type>(u & flt_mask);
-
-      int u_index { 1 };
-
-      while (u > static_cast<local_unsigned_integral_type>(UINT8_C(0)))
+      if (u > cpp_df_qf_detail::float_mask<UnsignedIntegralType, float_type>())
       {
-         u >>= static_cast<unsigned>(std::numeric_limits<float_type>::digits);
-
-         const float_type
-            xhi
+         local_unsigned_integral_type
+            local_flt_mask
             {
-                 static_cast<float_type>(u & flt_mask)
-               * cpp_df_qf_detail::pow2_maker<float_type>::value(std::numeric_limits<float_type>::digits * u_index)
+               cpp_df_qf_detail::float_mask<local_unsigned_integral_type, float_type>()
             };
 
-         eval_add(*this, cpp_double_fp_backend(xhi));
+         for (int     index_mask_lsb =  cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits;
+                     (index_mask_lsb <  static_cast<int>(sizeof(local_unsigned_integral_type) * 8u))
+                  && (local_flt_mask != local_unsigned_integral_type { UINT8_C(0) });
+                      index_mask_lsb += cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits)
+         {
+            local_flt_mask <<= static_cast<unsigned>(cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits);
 
-         ++u_index;
+            add_unchecked_limb(static_cast<float_type>(u & local_flt_mask));
+         }
       }
    }
 
@@ -527,13 +514,7 @@ class cpp_double_fp_backend
          }
       }
 
-      const rep_type thi_tlo { arithmetic::two_sum(data.second, v.data.second) };
-
-      data = arithmetic::two_sum(data.first, v.data.first);
-
-      data = arithmetic::two_hilo_sum(data.first, data.second + thi_tlo.first);
-
-      data = arithmetic::two_hilo_sum(data.first, thi_tlo.second + data.second);
+      add_unchecked(v);
 
       return *this;
    }
@@ -1053,6 +1034,28 @@ class cpp_double_fp_backend
    using cpp_bin_float_read_write_type = boost::multiprecision::number<cpp_bin_float_read_write_backend_type, boost::multiprecision::et_off>;
 
    auto rd_string(const char* pstr) -> bool;
+
+   constexpr auto add_unchecked(const cpp_double_fp_backend& v) -> void
+   {
+      const rep_type thi_tlo { arithmetic::two_sum(data.second, v.data.second) };
+
+      data = arithmetic::two_sum(data.first, v.data.first);
+
+      data = arithmetic::two_hilo_sum(data.first, data.second + thi_tlo.first);
+
+      data = arithmetic::two_hilo_sum(data.first, thi_tlo.second + data.second);
+   }
+
+   constexpr auto add_unchecked_limb(const float_type v_first) -> void
+   {
+      const float_type thi { data.second };
+
+      data = arithmetic::two_sum(data.first, v_first);
+
+      data = arithmetic::two_hilo_sum(data.first, data.second + thi);
+
+      data = arithmetic::two_hilo_sum(data.first, data.second);
+   }
 
    constexpr auto mul_unchecked(const cpp_double_fp_backend& v) -> void
    {

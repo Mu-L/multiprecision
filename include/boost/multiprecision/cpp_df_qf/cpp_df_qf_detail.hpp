@@ -32,6 +32,23 @@
 
 namespace boost { namespace multiprecision { namespace backends { namespace cpp_df_qf_detail {
 
+template <typename UnsignedIntegralType,
+          typename FloatType>
+constexpr auto float_mask() noexcept -> UnsignedIntegralType
+{
+   using local_unsigned_integral_type = UnsignedIntegralType;
+   using local_float_type = FloatType;
+
+   static_assert(static_cast<int>(sizeof(local_unsigned_integral_type) * 8u) > static_cast<int>(cpp_df_qf_detail::ccmath::numeric_limits<local_float_type>::digits),
+                 "Error: this function is intended for unsigned integral type wider than the float type.");
+
+   return
+   {
+        local_unsigned_integral_type { local_unsigned_integral_type { 1 } << static_cast<unsigned>(cpp_df_qf_detail::ccmath::numeric_limits<local_float_type>::digits) }
+      - local_unsigned_integral_type { 1 }
+   };
+}
+
 template <class FloatingPointTypeA, class FloatingPointTypeB>
 struct pair
 {
@@ -152,15 +169,6 @@ struct exact_arithmetic
          u,
          float_type { a - u } + b
       };
-   }
-};
-
-template<typename ArithmeticType>
-struct pow2_maker
-{
-   static constexpr auto value(const int power_value) noexcept -> ArithmeticType
-   {
-     return ((power_value == 0) ? ArithmeticType { 1 } : ArithmeticType { 2 } * pow2_maker<ArithmeticType>::value(power_value - 1));
    }
 };
 
