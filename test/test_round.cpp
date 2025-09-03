@@ -60,7 +60,10 @@
 #include <boost/multiprecision/float128.hpp>
 #endif
 #ifdef TEST_CPP_DOUBLE_FLOAT
+#if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+#else
 #include <boost/multiprecision/cpp_double_fp.hpp>
+#endif
 #endif
 
 #ifdef BOOST_MSVC
@@ -511,11 +514,14 @@ int main()
 #endif
 #ifdef TEST_CPP_DOUBLE_FLOAT
 
+   #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+   #else
    test<boost::multiprecision::cpp_double_float>();
    test<boost::multiprecision::cpp_double_double>();
    test<boost::multiprecision::cpp_double_long_double>();
    #if defined(BOOST_MP_CPP_DOUBLE_FP_HAS_FLOAT128)
    test<boost::multiprecision::cpp_double_float128>();
+   #endif
    #endif
 
 #endif
