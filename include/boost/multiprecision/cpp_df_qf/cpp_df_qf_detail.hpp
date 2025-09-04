@@ -56,15 +56,12 @@ struct pair
 
   using float_type = FloatingPointTypeA;
 
-  #if (defined(BOOST_CXX_VERSION) && (BOOST_CXX_VERSION >= 202002L))
   float_type first;
   float_type second;
-  #else
-  float_type first  { };
-  float_type second { };
-  #endif
 
-  constexpr pair() noexcept { }
+  // Default-constructed cpp_double_fp_backend values are zero.
+  constexpr pair() noexcept : first { }, second { } { }
+
   constexpr pair(float_type a, float_type b) noexcept : first { a }, second { b } { }
   constexpr pair(const pair& other) noexcept : first { other.first }, second { other.second } { }
   constexpr pair(pair&& other) noexcept : first { other.first }, second { other.second } { }
