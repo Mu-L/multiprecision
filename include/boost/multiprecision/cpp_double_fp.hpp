@@ -1072,19 +1072,6 @@ class cpp_double_fp_backend
 
       data = arithmetic::two_sum(data.first, v_first);
 
-      if (cpp_df_qf_detail::ccmath::isinf(data.first))
-      {
-         // Handle overflow.
-         *this = cpp_double_fp_backend::my_value_inf();
-
-         if (data.first)
-         {
-            negate();
-         }
-
-         return;
-      }
-
       data = arithmetic::two_hilo_sum(data.first, data.second + thi);
 
       data = arithmetic::two_hilo_sum(data.first, data.second);
