@@ -37,7 +37,7 @@
 #include <string>
 #include <type_traits>
 
-#if (defined(__clang__) && (__clang_major__ <= 9))
+#if (defined(BOOST_CLANG) && defined(BOOST_CLANG_VERSION) && (BOOST_CLANG_VERSION <= 90000))
 #define BOOST_MP_DF_QF_NUM_LIMITS_CLASS_TYPE struct
 #else
 #define BOOST_MP_DF_QF_NUM_LIMITS_CLASS_TYPE class
@@ -137,7 +137,6 @@ template <typename FloatingPointType,
           typename OtherFloatingPointType>
 constexpr auto eval_convert_to(OtherFloatingPointType* result, const cpp_double_fp_backend<FloatingPointType>& backend) -> typename ::std::enable_if<cpp_df_qf_detail::is_floating_point<OtherFloatingPointType>::value>::type;
 
-// TBD: constexpr on hash_value?
 template <typename FloatingPointType>
 constexpr auto hash_value(const cpp_double_fp_backend<FloatingPointType>& a) -> ::std::size_t;
 
@@ -874,7 +873,10 @@ class cpp_double_fp_backend
       }
    }
 
-   constexpr auto str(std::streamsize number_of_digits, const std::ios::fmtflags format_flags) const -> std::string
+   #if (defined(BOOST_CXX_VERSION) && (BOOST_CXX_VERSION >= 202002L))
+   constexpr
+   #endif
+   auto str(std::streamsize number_of_digits, const std::ios::fmtflags format_flags) const -> std::string
    {
       if (number_of_digits == 0)
       {
