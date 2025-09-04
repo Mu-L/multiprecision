@@ -388,8 +388,21 @@ class cpp_double_fp_backend
    {
       std::size_t result { UINT8_C(0) };
 
-      boost::multiprecision::detail::hash_combine(result, data.first);
-      boost::multiprecision::detail::hash_combine(result, data.second);
+      int n_first  { };
+      int n_second { };
+
+      #if defined(BOOST_MP_CPP_DOUBLE_FP_HAS_FLOAT128)
+      using local_float_type = typename std::conditional<::std::is_same<float_type, ::boost::float128_type>::value,
+                                                         long double,
+                                                         float_type>::type;
+      #else
+      using local_float_type = float_type;
+      #endif
+
+      boost::multiprecision::detail::hash_combine(result, static_cast<local_float_type>(cpp_df_qf_detail::ccmath::frexp(data.first,  &n_first)));
+      boost::multiprecision::detail::hash_combine(result, static_cast<local_float_type>(cpp_df_qf_detail::ccmath::frexp(data.second, &n_second)));
+      boost::multiprecision::detail::hash_combine(result, n_first);
+      boost::multiprecision::detail::hash_combine(result, n_second);
 
       return result;
    }
