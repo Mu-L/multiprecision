@@ -14,7 +14,7 @@
 #include <cmath>
 #include <type_traits>
 
-#if (defined(__GNUC__) && defined(BOOST_MP_CPP_DOUBLE_FP_HAS_FLOAT128))
+#if (defined(BOOST_GCC) && defined(BOOST_MP_CPP_DOUBLE_FP_HAS_FLOAT128))
 //
 // This is the only way we can avoid
 // warning: non-standard suffix on floating constant [-Wpedantic]

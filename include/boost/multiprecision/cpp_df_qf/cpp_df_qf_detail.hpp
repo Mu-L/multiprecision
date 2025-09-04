@@ -56,15 +56,20 @@ struct pair
 
   using float_type = FloatingPointTypeA;
 
+  #if (defined(BOOST_CXX_VERSION) && (BOOST_CXX_VERSION >= 202002L))
   float_type first;
   float_type second;
+  #else
+  float_type first  { };
+  float_type second { };
+  #endif
 
-  constexpr pair() : first { }, second { } { };
-  constexpr pair(float_type a, float_type b) : first { a }, second { b } { }
-  constexpr pair(const pair& other) : first { other.first }, second { other.second } { }
+  constexpr pair() noexcept { }
+  constexpr pair(float_type a, float_type b) noexcept : first { a }, second { b } { }
+  constexpr pair(const pair& other) noexcept : first { other.first }, second { other.second } { }
   constexpr pair(pair&& other) noexcept : first { other.first }, second { other.second } { }
 
-  constexpr auto operator=(const pair& other) -> pair&
+  constexpr auto operator=(const pair& other) noexcept -> pair&
   {
      if (this != &other)
      {
