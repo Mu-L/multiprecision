@@ -886,9 +886,10 @@ class cpp_double_fp_backend
       }
    }
 
-   #if (defined(BOOST_CXX_VERSION) && (BOOST_CXX_VERSION >= 202002L))
-   constexpr
-   #endif
+   // TBD: Exactly what compilers/language-standards are needed to make this constexpr?
+   // TBD: It odes not really become constexpr until we stop using an intermediate
+   // cpp_bin_float anyway. But I will leave this comment for future library evolution.
+
    auto str(std::streamsize number_of_digits, const std::ios::fmtflags format_flags) const -> std::string
    {
       if (number_of_digits == 0)
