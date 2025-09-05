@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright 2021 Fahad Syed.
+//  Copyright 2021 - 2025 Fahad Syed.
 //  Copyright 2021 - 2025 Christopher Kormanyos.
-//  Copyright 2021 Janek Kozicki.
+//  Copyright 2021 - 2025 Janek Kozicki.
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
@@ -13,7 +13,6 @@
 #include <boost/multiprecision/detail/standalone_config.hpp>
 
 #if defined(BOOST_HAS_FLOAT128)
-#if defined(__has_include)
 #if __has_include(<quadmath.h>)
 
 #include <quadmath.h>
@@ -23,7 +22,6 @@
 #endif
 
 #endif // __has_include(<quadmath.h>)
-#endif // defined(__has_include)
 #endif // defined(BOOST_HAS_FLOAT128)
 
 #include <boost/multiprecision/number.hpp>
@@ -59,12 +57,14 @@ struct pair
   float_type first;
   float_type second;
 
-  constexpr pair() : first { }, second { } { };
-  constexpr pair(float_type a, float_type b) : first { a }, second { b } { }
-  constexpr pair(const pair& other) : first { other.first }, second { other.second } { }
+  // Default-constructed cpp_double_fp_backend values are zero.
+  constexpr pair() noexcept : first { }, second { } { }
+
+  constexpr pair(float_type a, float_type b) noexcept : first { a }, second { b } { }
+  constexpr pair(const pair& other) noexcept : first { other.first }, second { other.second } { }
   constexpr pair(pair&& other) noexcept : first { other.first }, second { other.second } { }
 
-  constexpr auto operator=(const pair& other) -> pair&
+  constexpr auto operator=(const pair& other) noexcept -> pair&
   {
      if (this != &other)
      {
@@ -110,7 +110,7 @@ public:
       };
 
       static_assert(n_shl < std::numeric_limits<std::uint64_t>::digits,
-                    "Error: Left-shift amount for split does not fin in std::uint64_t");
+                    "Error: Left-shift amount for split does not fit in std::uint64_t");
 
    static constexpr float_type
       value

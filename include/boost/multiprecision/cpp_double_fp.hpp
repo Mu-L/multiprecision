@@ -37,7 +37,7 @@
 #include <string>
 #include <type_traits>
 
-#if (defined(__clang__) && (__clang_major__ <= 9))
+#if (defined(BOOST_CLANG) && defined(BOOST_CLANG_VERSION) && (BOOST_CLANG_VERSION <= 90000))
 #define BOOST_MP_DF_QF_NUM_LIMITS_CLASS_TYPE struct
 #else
 #define BOOST_MP_DF_QF_NUM_LIMITS_CLASS_TYPE class
@@ -137,9 +137,8 @@ template <typename FloatingPointType,
           typename OtherFloatingPointType>
 constexpr auto eval_convert_to(OtherFloatingPointType* result, const cpp_double_fp_backend<FloatingPointType>& backend) -> typename ::std::enable_if<cpp_df_qf_detail::is_floating_point<OtherFloatingPointType>::value>::type;
 
-// TBD: constexpr on hash_value?
 template <typename FloatingPointType>
-auto hash_value(const cpp_double_fp_backend<FloatingPointType>& a) -> ::std::size_t;
+constexpr auto hash_value(const cpp_double_fp_backend<FloatingPointType>& a) -> ::std::size_t;
 
 template <typename FloatingPointType>
 constexpr auto fabs(const cpp_double_fp_backend<FloatingPointType>& a) -> cpp_double_fp_backend<FloatingPointType>;
@@ -385,38 +384,25 @@ class cpp_double_fp_backend
       return *this;
    }
 
-   auto hash() const -> ::std::size_t
+   constexpr auto hash() const -> ::std::size_t
    {
-      // Hash the raw values of the data field with direct-memory access.
-      // Use 16-bit (2 byte) chunks as the data size when hashing.
-
-      static_assert(   ( sizeof(data.first) == sizeof(data.second))
-                    && ( sizeof(float_type) >= sizeof(std::uint16_t))
-                    && ((sizeof(float_type) %  sizeof(std::uint16_t)) == std::size_t { UINT8_C(0) }),
-                    "Error: float_type size is inappropriate for hashing routine");
-
-      auto hash_one
-         {
-            [](std::size_t& res, const float_type& val)
-            {
-               const std::uint16_t* first { reinterpret_cast<const std::uint16_t*>(&val) };
-               const std::uint16_t* last  { first + std::size_t { sizeof(float_type) / sizeof(std::uint16_t) } };
-
-               while (first != last)
-               {
-                  boost::multiprecision::detail::hash_combine(res, *first);
-
-                  ++first;
-               }
-
-               return res;
-             }
-         };
-
       std::size_t result { UINT8_C(0) };
 
-      static_cast<void>(hash_one(result, data.first));
-      static_cast<void>(hash_one(result, data.second));
+      int n_first  { };
+      int n_second { };
+
+      #if defined(BOOST_MP_CPP_DOUBLE_FP_HAS_FLOAT128)
+      using local_float_type = typename std::conditional<::std::is_same<float_type, ::boost::float128_type>::value,
+                                                         long double,
+                                                         float_type>::type;
+      #else
+      using local_float_type = float_type;
+      #endif
+
+      boost::multiprecision::detail::hash_combine(result, static_cast<local_float_type>(cpp_df_qf_detail::ccmath::frexp(data.first,  &n_first)));
+      boost::multiprecision::detail::hash_combine(result, static_cast<local_float_type>(cpp_df_qf_detail::ccmath::frexp(data.second, &n_second)));
+      boost::multiprecision::detail::hash_combine(result, n_first);
+      boost::multiprecision::detail::hash_combine(result, n_second);
 
       return result;
    }
@@ -573,6 +559,21 @@ class cpp_double_fp_backend
       const rep_type thi_tlo { arithmetic::two_diff(data.second, v.data.second) };
 
       data = arithmetic::two_diff(data.first, v.data.first);
+
+      if (cpp_df_qf_detail::ccmath::isinf(data.first))
+      {
+         // Handle overflow.
+         const bool b_neg { (data.first < float_type { 0.0F }) };
+
+         *this = cpp_double_fp_backend::my_value_inf();
+
+         if (b_neg)
+         {
+            negate();
+         }
+
+         return *this;
+      }
 
       data = arithmetic::two_hilo_sum(data.first, data.second + thi_tlo.first);
 
@@ -885,6 +886,10 @@ class cpp_double_fp_backend
       }
    }
 
+   // TBD: Exactly what compilers/language-standards are needed to make this constexpr?
+   // TBD: It odes not really become constexpr until we stop using an intermediate
+   // cpp_bin_float anyway. But I will leave this comment for future library evolution.
+
    auto str(std::streamsize number_of_digits, const std::ios::fmtflags format_flags) const -> std::string
    {
       if (number_of_digits == 0)
@@ -1033,13 +1038,28 @@ class cpp_double_fp_backend
 
    using cpp_bin_float_read_write_type = boost::multiprecision::number<cpp_bin_float_read_write_backend_type, boost::multiprecision::et_off>;
 
-   auto rd_string(const char* pstr) -> bool;
+   constexpr auto rd_string(const char* pstr) -> bool;
 
    constexpr auto add_unchecked(const cpp_double_fp_backend& v) -> void
    {
       const rep_type thi_tlo { arithmetic::two_sum(data.second, v.data.second) };
 
       data = arithmetic::two_sum(data.first, v.data.first);
+
+      if (cpp_df_qf_detail::ccmath::isinf(data.first))
+      {
+         // Handle overflow.
+         const bool b_neg { (data.first < float_type { 0.0F }) };
+
+         *this = cpp_double_fp_backend::my_value_inf();
+
+         if (b_neg)
+         {
+            negate();
+         }
+
+         return;
+      }
 
       data = arithmetic::two_hilo_sum(data.first, data.second + thi_tlo.first);
 
@@ -1156,7 +1176,7 @@ class cpp_double_fp_backend
 };
 
 template <typename FloatingPointType>
-auto cpp_double_fp_backend<FloatingPointType>::rd_string(const char* pstr) -> bool
+constexpr auto cpp_double_fp_backend<FloatingPointType>::rd_string(const char* pstr) -> bool
 {
    cpp_bin_float_read_write_type f_bin { pstr };
 
@@ -2458,7 +2478,7 @@ constexpr auto eval_convert_to(OtherFloatingPointType* result, const cpp_double_
 }
 
 template <typename FloatingPointType>
-auto hash_value(const cpp_double_fp_backend<FloatingPointType>& a) -> ::std::size_t
+constexpr auto hash_value(const cpp_double_fp_backend<FloatingPointType>& a) -> ::std::size_t
 {
    return a.hash();
 }

@@ -499,8 +499,6 @@ namespace local
       result_is_ok = (result_unf_is_ok && result_is_ok);
     }
 
-    // TBD: See open issues for reminder to get this working in cpp_double_fp_backend.
-    BOOST_IF_CONSTEXPR(!::has_poor_exp_range_or_precision_support<float_type>::value)
     {
       using std::ldexp;
 
@@ -524,8 +522,6 @@ namespace local
       result_is_ok = (result_ovf_is_ok && result_is_ok);
     }
 
-    // TBD: See open issues for reminder to get this working in cpp_double_fp_backend.
-    BOOST_IF_CONSTEXPR(!::has_poor_exp_range_or_precision_support<float_type>::value)
     {
       using std::ldexp;
 
@@ -538,6 +534,29 @@ namespace local
       while((index < max_index) && (!(boost::multiprecision::isinf)(flt_near_lowest)))
       {
         flt_near_lowest -= (flt_less_near_max * dis(gen));
+
+        ++index;
+      }
+
+      const bool result_ovf_is_ok { ((index > 1U) && (index < max_index)) && signbit(flt_near_lowest) };
+
+      BOOST_TEST(result_ovf_is_ok);
+
+      result_is_ok = (result_ovf_is_ok && result_is_ok);
+    }
+
+    {
+      using std::ldexp;
+
+      float_type flt_near_lowest { -ldexp((std::numeric_limits<float_type>::max)(), -1) };
+
+      const float_type neg_flt_less_near_max { -ldexp((std::numeric_limits<float_type>::max)(), -4) };
+
+      unsigned index { };
+
+      while((index < max_index) && (!(boost::multiprecision::isinf)(flt_near_lowest)))
+      {
+        flt_near_lowest += (neg_flt_less_near_max * dis(gen));
 
         ++index;
       }
