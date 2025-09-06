@@ -1928,7 +1928,7 @@ std::string cpp_dec_float<Digits10, ExponentType, Allocator>::str(std::intmax_t 
 
    if (f & std::ios_base::fixed)
    {
-      number_of_digits = (std::max)(static_cast<std::intmax_t>(number_of_digits + my_exp + 1), std::intmax_t { INT8_C(0) });
+      number_of_digits += my_exp + 1;
    }
    else if (f & std::ios_base::scientific)
       ++number_of_digits;
