@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <typeinfo>
 
 namespace local {
 
@@ -18,11 +19,17 @@ auto my_stringify_via_top_level_number(const std::streamsize strm_size) -> std::
 {
   using float_type = boost::multiprecision::number<BackendType, boost::multiprecision::et_off>;
 
+  #if defined(BOOST_MSVC)
+  using streamsize_type = std::streamsize;
+  #else
+  using streamsize_type = int;
+  #endif
+
   float_type x("0.0000000000000000222222222222222");
 
   std::stringstream strm { };
 
-  strm << std::setprecision(strm_size) << std::fixed;
+  strm << std::setprecision(static_cast<streamsize_type>(strm_size)) << std::fixed;
   strm << x;
 
   return strm.str();
@@ -33,11 +40,17 @@ auto my_stringify_via_str_and_backend_str(const std::streamsize strm_size) -> st
 {
   using float_type = boost::multiprecision::number<BackendType, boost::multiprecision::et_off>;
 
+  #if defined(BOOST_MSVC)
+  using streamsize_type = std::streamsize;
+  #else
+  using streamsize_type = int;
+  #endif
+
   float_type x("0.0000000000000000222222222222222");
 
   std::stringstream strm { };
 
-  strm << std::setprecision(strm_size) << std::fixed;
+  strm << std::setprecision(static_cast<streamsize_type>(strm_size)) << std::fixed;
 
   return x.str(strm_size, strm.flags());
 }
@@ -45,15 +58,17 @@ auto my_stringify_via_str_and_backend_str(const std::streamsize strm_size) -> st
 template<typename BackendType>
 auto test() -> void
 {
-  BOOST_TEST(my_stringify_via_top_level_number<BackendType>(0)  == "0");
-  BOOST_TEST(my_stringify_via_top_level_number<BackendType>(8)  == "0.00000000");
-  BOOST_TEST(my_stringify_via_top_level_number<BackendType>(12) == "0.000000000000");
-  BOOST_TEST(my_stringify_via_top_level_number<BackendType>(31) == "0.0000000000000000222222222222222");
+  std::cout << "Testing type of test: " << typeid(BackendType).name() << std::endl;
 
-  BOOST_TEST(my_stringify_via_str_and_backend_str<BackendType>(0)  == "0");
-  BOOST_TEST(my_stringify_via_str_and_backend_str<BackendType>(8)  == "0.00000000");
-  BOOST_TEST(my_stringify_via_str_and_backend_str<BackendType>(12) == "0.000000000000");
-  BOOST_TEST(my_stringify_via_str_and_backend_str<BackendType>(31) == "0.0000000000000000222222222222222");
+  BOOST_TEST(my_stringify_via_top_level_number<BackendType>(std::streamsize { INT8_C(0) })  == "0");
+  BOOST_TEST(my_stringify_via_top_level_number<BackendType>(std::streamsize { INT8_C(8) })  == "0.00000000");
+  BOOST_TEST(my_stringify_via_top_level_number<BackendType>(std::streamsize { INT8_C(12) }) == "0.000000000000");
+  BOOST_TEST(my_stringify_via_top_level_number<BackendType>(std::streamsize { INT8_C(31) }) == "0.0000000000000000222222222222222");
+
+  BOOST_TEST(my_stringify_via_str_and_backend_str<BackendType>(std::streamsize { INT8_C(0) })  == "0");
+  BOOST_TEST(my_stringify_via_str_and_backend_str<BackendType>(std::streamsize { INT8_C(8) })  == "0.00000000");
+  BOOST_TEST(my_stringify_via_str_and_backend_str<BackendType>(std::streamsize { INT8_C(12) }) == "0.000000000000");
+  BOOST_TEST(my_stringify_via_str_and_backend_str<BackendType>(std::streamsize { INT8_C(31) }) == "0.0000000000000000222222222222222");
 }
 
 } // namespace local
@@ -62,7 +77,10 @@ auto main() -> int
 {
   local::test<boost::multiprecision::cpp_bin_float<32>>();
   local::test<boost::multiprecision::cpp_dec_float<32>>();
-  local::test<boost::multiprecision::cpp_double_fp_backend<double>>();
+  BOOST_IF_CONSTEXPR(std::numeric_limits<double>::digits >= 53)
+  {
+    local::test<boost::multiprecision::cpp_double_fp_backend<double>>();
+  }
 
   return boost::report_errors();
 }

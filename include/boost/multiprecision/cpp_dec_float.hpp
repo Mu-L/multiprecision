@@ -1932,8 +1932,17 @@ std::string cpp_dec_float<Digits10, ExponentType, Allocator>::str(std::intmax_t 
    }
    else if (f & std::ios_base::scientific)
       ++number_of_digits;
-   // Determine the number of elements needed to provide the requested digits from cpp_dec_float<Digits10, ExponentType, Allocator>.
-   const std::size_t number_of_elements = (std::min)(static_cast<std::size_t>(static_cast<std::size_t>(number_of_digits / static_cast<std::intmax_t>(cpp_dec_float_elem_digits10)) + 2u),
+
+   // Determine the number of elements needed to provide the requested
+   // digits from cpp_dec_float<Digits10, ExponentType, Allocator>.
+   const std::intmax_t
+      number_of_elements_signed
+      {
+         (std::max)(static_cast<std::intmax_t>(number_of_digits / static_cast<std::intmax_t>(cpp_dec_float_elem_digits10) + 2),
+                    std::intmax_t { INT8_C(0) })
+      };
+
+   const std::size_t number_of_elements = (std::min)(static_cast<std::size_t>(number_of_elements_signed),
                                                      static_cast<std::size_t>(cpp_dec_float_elem_number));
 
    // Extract the remaining digits from cpp_dec_float<Digits10, ExponentType, Allocator> after the decimal point.
