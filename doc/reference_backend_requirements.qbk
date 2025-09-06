@@ -45,7 +45,7 @@ and `ff` is a variable of type `std::ios_base::fmtflags`.
 [[`b = s`][`B&`][Assignment from a string.][Throws a `std::runtime_error` if the string could not be interpreted as a valid number.]]
 [[`b.swap(b)`][`void`][Swaps the contents of its arguments.][`noexcept`]]
 [[`cb.str(ss, ff)`][`std::string`][Returns the string representation of `b` with `ss` digits and formatted according to the flags set in `ff`.
-                  If `ss` is zero and neither of `std::ios::fixed` and  `std::ios::scientific` is set in the float-field, then returns as many digits as are required to reconstruct the original value.][[space]]]
+                  If `ss` is zero and `std::ios_base::fixed` is not set in `ff`, then returns as many digits as are required to reconstruct the original value.][[space]]]
 [[`b.negate()`][`void`][Negates `b`.][[space]]]
 [[`cb.compare(cb2)`][`int`][Compares `cb` and `cb2`, returns a value less than zero if `cb < cb2`, a value greater than zero if `cb > cb2` and zero
                    if `cb == cb2`.][`noexcept`]]
