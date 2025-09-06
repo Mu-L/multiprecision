@@ -892,11 +892,6 @@ class cpp_double_fp_backend
 
    auto str(std::streamsize number_of_digits, const std::ios::fmtflags format_flags) const -> std::string
    {
-      if (number_of_digits == 0)
-      {
-         number_of_digits = cpp_double_fp_backend::my_digits10;
-      }
-
       // Use cpp_bin_float when writing to string. This is similar
       // to the use of cpp_bin_float when reading from string.
 

@@ -58,7 +58,7 @@
       bool is_zero()const;
       int sign()const;
       // string conversion:
-      std::string str()const;
+      std::string str(std::streamsize digits = 0, std::ios_base::fmtflags f = std::ios_base::fmtflags(0))const;
       // Generic conversion mechanism
       template <class T>
       T convert_to()const;
@@ -416,10 +416,10 @@ Returns `true` is `*this` is zero, otherwise `false`.
 Returns a value less than zero if `*this` is negative, a value greater than zero if `*this` is positive, and zero
 if `*this` is zero.
 
-      std::string str(unsigned precision, bool scientific = true)const;
+      std::string str(std::streamsize digits = 0, std::ios_base::fmtflags f = std::ios_base::fmtflags(0))const;
 
-Returns the number formatted as a string, with at least /precision/ digits, and in scientific format
-if /scientific/ is true.
+Returns the number formatted as a string, with at least /precision/ digits, and adhering to the format
+flags in /f/ if provided.
 
       template <class T>
       T convert_to()const;
