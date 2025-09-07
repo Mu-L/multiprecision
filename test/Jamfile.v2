@@ -513,7 +513,7 @@ test-suite functions_and_limits :
       [ run test_cpp_bin_float_tgamma.cpp ]
       [ run test_cpp_dec_float_tgamma.cpp ]
       [ run test_cpp_double_float_tgamma.cpp ]
-      [ run test_cpp_double_float_bessel_versus_bin_and_dec ]
+      [ run test_cpp_double_float_bessel_versus_bin_and_dec.cpp ]
 
       [ run test_roots_10k_digits.cpp
               : # command line
