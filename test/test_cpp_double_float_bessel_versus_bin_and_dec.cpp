@@ -1,287 +1,374 @@
 ///////////////////////////////////////////////////////////////
-//  Copyright John Maddock 2019.
-//  Copyright Christopher Kormanyos 2021 - 2025.
+//  Copyright Christopher Kormanyos 2024 - 2025.
 //  Distributed under the Boost
 //  Software License, Version 1.0. (See accompanying file
 //  LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt
 
-// This version of "performance_test_df.cpp" is based almost entirely on
-// the original "performance_test.cpp". But it has been specifically
-// adapted to test various backends in small precision ranges in order
-// to check the performance comparison with cpp_double_double.
+// This version of "performance_test_df_local.cpp" is intended
+// for specific function-by-function comparisons with cpp_double_double.
 
-#include <boost/config.hpp>
-
-#if !defined(TEST_CPP_DOUBLE_FLOAT)
-#define TEST_CPP_DOUBLE_FLOAT
-#endif
-
-#if !defined(TEST_CPP_BIN_FLOAT)
-#define TEST_CPP_BIN_FLOAT
-#endif
-
-#if !defined(TEST_CPP_DEC_FLOAT)
-#define TEST_CPP_DEC_FLOAT
-#endif
-
-#if defined(BOOST_HAS_FLOAT128)
-#if !defined(TEST_FLOAT128)
-#define TEST_FLOAT128
-#endif
-#endif
-
-#include <boost/version.hpp>
-
-#if defined(TEST_CPP_DOUBLE_FLOAT)
+#include <boost/core/lightweight_test.hpp>
+#include <boost/math/special_functions/bessel.hpp>
 #include <boost/multiprecision/cpp_double_fp.hpp>
-#endif
-
-#if defined(TEST_CPP_BIN_FLOAT)
-#include <boost/multiprecision/cpp_bin_float.hpp>
-#endif
-
-#if defined(TEST_CPP_BIN_FLOAT)
 #include <boost/multiprecision/cpp_dec_float.hpp>
-#endif
-
-#if defined(TEST_FLOAT128)
+#if defined(BOOST_HAS_FLOAT128)
 #include <boost/multiprecision/float128.hpp>
 #endif
 
-#include "performance_test_df.hpp"
+#include <charconv>
+#include <cstdint>
+#include <ctime>
+#include <limits>
+#include <iomanip>
+#include <iostream>
+#include <random>
+#include <sstream>
+#include <vector>
 
-// cd /mnt/c/Users/ckorm/Documents/Ks/PC_Software/Test
-// g++ -std=gnu++14 -Wall -Wextra -O3 -I/mnt/c/ChrisGitRepos/modular_boost/multiprecision/performance -I/mnt/c/ChrisGitRepos/modular_boost/multiprecision/include -I/mnt/c/boost/boost_1_89_0 ./test.cpp -lquadmath -o test
-
-//
-// Keys in order are:
-// Category
-// Operator
-// Type
-// Precision
-// Time
-//
-std::map<std::string, std::map<std::string, std::map<std::string, std::map<int, double> > > > result_table;
-
-unsigned bits_wanted; // for integer types
-
-void quickbook_results()
-{
-   //
-   // Keys in order are:
-   // Category
-   // Operator
-   // Type
-   // Precision
-   // Time
-   //
-   typedef std::map<std::string, std::map<std::string, std::map<std::string, std::map<int, double> > > >::const_iterator category_iterator;
-   typedef std::map<std::string, std::map<std::string, std::map<int, double> > >::const_iterator                         operator_iterator;
-   typedef std::map<std::string, std::map<int, double> >::const_iterator                                                 type_iterator;
-   typedef std::map<int, double>::const_iterator                                                                         precision_iterator;
-
-   for (category_iterator i = result_table.begin(); i != result_table.end(); ++i)
-   {
-      std::string cat = i->first;
-      cat[0]          = (char)std::toupper((char)cat[0]);
-      std::cout << "[section:" << i->first << "_performance " << cat << " Type Perfomance]" << std::endl;
-
-      for (operator_iterator j = i->second.begin(); j != i->second.end(); ++j)
-      {
-         std::string op = j->first;
-         std::cout << "[table Operator " << op << std::endl;
-         std::cout << "[[Backend]";
-
-         for (precision_iterator k = j->second.begin()->second.begin(); k != j->second.begin()->second.end(); ++k)
-         {
-            std::cout << "[" << k->first << " Bits]";
-         }
-         std::cout << "]\n";
-
-         std::vector<double> best_times(j->second.begin()->second.size(), (std::numeric_limits<double>::max)());
-         for (unsigned m = 0; m < j->second.begin()->second.size(); ++m)
-         {
-            for (type_iterator k = j->second.begin(); k != j->second.end(); ++k)
-            {
-               if (m < k->second.size())
-               {
-                  precision_iterator l = k->second.begin();
-                  std::advance(l, m);
-                  if (best_times[m] > l->second)
-                     best_times[m] = l->second ? l->second : best_times[m];
-               }
-            }
-         }
-
-         for (type_iterator k = j->second.begin(); k != j->second.end(); ++k)
-         {
-            std::cout << "[[" << k->first << "]";
-
-            unsigned m = 0;
-            for (precision_iterator l = k->second.begin(); l != k->second.end(); ++l)
-            {
-               double rel_time = l->second / best_times[m];
-               if (rel_time == 1)
-                  std::cout << "[[*" << rel_time << "]";
-               else
-                  std::cout << "[" << rel_time;
-               std::cout << " (" << l->second << "s)]";
-               ++m;
-            }
-
-            std::cout << "]\n";
-         }
-
-         std::cout << "]\n";
-      }
-
-      std::cout << "[endsect]" << std::endl;
-   }
-}
-
-#if defined(__HAS_INCLUDE)
-#if __has_include(<sys/utsname.h>)
-#define HAS_UTSNAME
-#include <sys/utsname.h>
-#endif
-#endif
-#ifdef _WIN32
-#include <windows.h>
-#endif
-
-void quickbook_platform_details()
-{
-   std::cout << "[table:platform Platform Details\n[[Platform][";
-#ifdef HAS_UTSNAME
-   utsname name;
-   uname(&name);
-   std::cout << name.sysname << " " << name.release << ", version " << name.version << ", " << name.machine << "]]\n";
-#elif defined(_WIN32)
-   std::cout << "Windows ";
-#ifdef _M_AMD64
-   std::cout << "x64";
-#elif defined(_M_IX86)
-   std::cout << "x86";
-#endif
-   std::cout << "]]\n";
-#endif
-   std::cout << "[[Compiler][" << BOOST_COMPILER << "]]\n";
-   std::cout << "[[Boost][" << BOOST_VERSION << "]]\n";
-   std::cout << "[[Run date][" << __DATE__ << "]]\n";
-   std::cout << "]\n\n";
-}
-
-namespace local {
-
-void test29();
-void test32();
-void test52();
-void test53();
-
-#ifdef TEST_CPP_DOUBLE_FLOAT
-template<class T>
-constexpr inline auto (max)(T a, T b) noexcept -> T { return a > b ? a : b; }
-#endif
-
-} // namespace local
-
-int main()
-{
-   quickbook_platform_details();
-
-   local::test29();
-   local::test32();
-   local::test52();
-   #if defined(BOOST_MP_CPP_DOUBLE_FP_HAS_FLOAT128)
-   local::test53();
-   #endif
-
-   quickbook_results();
-}
-
-#ifdef TEST_CPP_DOUBLE_FLOAT
-using double_float_of_double_type = boost::multiprecision::cpp_double_double;
-
-constexpr auto digits10_for_performance_test = (local::max)(std::numeric_limits<double_float_of_double_type>::digits10, 32);
+#if (defined(BOOST_MSVC) && !defined(BOOST_GCC))
+#define STOPWATCH_NODISCARD
 #else
-constexpr auto digits10_for_performance_test = 32;
+#if (defined(BOOST_CXX_VERSION) && (BOOST_CXX_VERSION >= 201703L))
+#define STOPWATCH_NODISCARD  [[nodiscard]] // NOLINT(cppcoreguidelines-macro-usage)
+#else
+#define STOPWATCH_NODISCARD
+#endif
 #endif
 
-void local::test29()
+namespace concurrency {
+
+// See also: https://godbolt.org/z/37a4n9f4Y
+
+struct stopwatch
 {
-#ifdef TEST_CPP_DEC_FLOAT
-   static_assert(digits10_for_performance_test >= 32, "Error: Too few digits for performance comparison");
+public:
+  using time_point_type = std::uintmax_t;
 
-   using cpp_dec_float_type =
-      boost::multiprecision::number<boost::multiprecision::backends::cpp_dec_float<digits10_for_performance_test>,
-                                    boost::multiprecision::et_off>;
+  auto reset() -> void
+  {
+    m_start = now();
+  }
 
-   test<cpp_dec_float_type>("cpp_dec_float", digits10_for_performance_test);
-#endif
+  template<typename RepresentationRequestedTimeType>
+  static auto elapsed_time(const stopwatch& my_stopwatch) -> RepresentationRequestedTimeType
+  {
+    using local_time_type = RepresentationRequestedTimeType;
+
+    return
+      local_time_type
+      {
+          static_cast<local_time_type>(my_stopwatch.elapsed())
+        / local_time_type { UINTMAX_C(1000000000) }
+      };
+  }
+
+  STOPWATCH_NODISCARD static auto now() -> time_point_type
+  {
+    #if defined(__CYGWIN__)
+
+    return static_cast<time_point_type>(std::clock());
+
+    #else
+
+    timespec ts { };
+
+    const int ntsp { timespec_get(&ts, TIME_UTC) };
+
+    static_cast<void>(ntsp);
+
+    return
+      static_cast<time_point_type>
+      (
+          static_cast<time_point_type>(static_cast<time_point_type>(ts.tv_sec) * UINTMAX_C(1000000000))
+        + static_cast<time_point_type>(ts.tv_nsec)
+      );
+
+    #endif
+  }
+
+private:
+  time_point_type m_start { now() }; // NOLINT(readability-identifier-naming)
+
+  STOPWATCH_NODISCARD auto elapsed() const -> time_point_type
+  {
+    const time_point_type stop { now() };
+
+    #if defined(__CYGWIN__)
+
+    const time_point_type
+      elapsed_ns
+      {
+        static_cast<time_point_type>
+        (
+            static_cast<time_point_type>(static_cast<time_point_type>(stop - m_start) * UINTMAX_C(1000000000))
+          / static_cast<time_point_type>(CLOCKS_PER_SEC)
+        )
+      };
+
+    #else
+
+    const time_point_type elapsed_ns { static_cast<time_point_type>(stop - m_start) };
+
+    #endif
+
+    return elapsed_ns;
+  }
+};
+
+} // namespace concurrency
+
+namespace util {
+
+template<typename UnsignedIntegralType>
+auto util_pseudorandom_time_point_seed() -> UnsignedIntegralType
+{
+  using stopwatch_type = concurrency::stopwatch;
+
+  return static_cast<UnsignedIntegralType>(stopwatch_type::now());
 }
 
-void local::test32()
+} // namespace util
+
+std::uniform_int_distribution<std::uint32_t> dist_sgn(UINT32_C(   0), UINT32_C(    1)); // NOLINT(cert-err58-cpp,cppcoreguidelines-avoid-non-const-global-variables)
+std::uniform_int_distribution<std::uint32_t> dist_dig(UINT32_C(0x31), UINT32_C( 0x39)); // NOLINT(cert-err58-cpp,cppcoreguidelines-avoid-non-const-global-variables)
+
+using eng_sgn_type = std::minstd_rand0;
+using eng_dig_type = std::mt19937_64;
+
+eng_sgn_type eng_sgn; // NOLINT(cert-msc32-c,cert-msc51-cpp,cert-err58-cpp,cppcoreguidelines-avoid-non-const-global-variables)
+eng_dig_type eng_dig; // NOLINT(cert-msc32-c,cert-msc51-cpp,cert-err58-cpp,cppcoreguidelines-avoid-non-const-global-variables)
+
+template<typename FloatingPointType>
+auto generate_wide_decimal_value(int digits10_to_get = std::numeric_limits<FloatingPointType>::digits10 - 2) -> std::string
 {
-#ifdef TEST_CPP_BIN_FLOAT
-   static_assert(digits10_for_performance_test >= 32, "Error: Too few digits for performance comparison");
+  using local_floating_point_type = FloatingPointType;
 
-   using cpp_bin_float_type =
-      boost::multiprecision::number<boost::multiprecision::backends::cpp_bin_float<digits10_for_performance_test>,
-                                    boost::multiprecision::et_off>;
+  static_assert(std::numeric_limits<local_floating_point_type>::digits10 > static_cast<int>(INT8_C(9)),
+                "Error: Floating-point type destination does not have enough digits10");
 
-   test<cpp_bin_float_type>("cpp_bin_float", digits10_for_performance_test);
-#endif
+  std::string str_x(static_cast<std::size_t>(digits10_to_get + 1), '0');
+
+  // Get the leading digit before the decimal point.
+  str_x[std::string::size_type { UINT8_C(0) }] = static_cast<char>(dist_dig(eng_dig));
+
+  // Insert a decimal point.
+  str_x[std::string::size_type { UINT8_C(1) }] = '.';
+
+  std::generate(str_x.begin() + std::string::size_type { UINT8_C(2) },
+                str_x.end(),
+                []() // NOLINT(modernize-use-trailing-return-type,-warnings-as-errors)
+                {
+                  return static_cast<char>(dist_dig(eng_dig));
+                });
+
+  return str_x;
 }
 
-void local::test52()
+template<typename NumericType>
+auto is_close_fraction(const NumericType& a,
+                       const NumericType& b,
+                       const NumericType& tol) noexcept -> bool
 {
-#ifdef TEST_CPP_DOUBLE_FLOAT
-   test<double_float_of_double_type>("cpp_double_fp_backend<double>", digits10_for_performance_test);
-#endif
+  using std::fabs;
+
+  auto result_is_ok = bool { };
+
+  if(b == static_cast<NumericType>(0))
+  {
+    result_is_ok = (fabs(a - b) < tol); // LCOV_EXCL_LINE
+  }
+  else
+  {
+    const auto delta = fabs(1 - (a / b));
+
+    result_is_ok = (delta < tol);
+  }
+
+  return result_is_ok;
 }
 
-void local::test53()
+auto do_trials(const std::size_t trial_count) -> void
 {
-#if defined(BOOST_HAS_FLOAT128)
-#ifdef TEST_FLOAT128
-   using boost::multiprecision::float128;
+  static std::size_t heat_count { };
 
-   test<float128>("boost::multiprecision::float128(at)", std::numeric_limits<boost::multiprecision::float128>::digits10);
-#endif
-#endif
+  std::cout << "\nheat_count: " << ++heat_count << std::endl;
+
+  using dbl_float_type = boost::multiprecision::cpp_double_double;
+
+  constexpr int local_digits10 = ((std::numeric_limits<dbl_float_type>::digits10 < 32) ? 32 : std::numeric_limits<dbl_float_type>::digits10);
+
+  using dec_float_type = boost::multiprecision::number<boost::multiprecision::cpp_dec_float<local_digits10>, boost::multiprecision::et_off>;
+  using bin_float_type = boost::multiprecision::number<boost::multiprecision::cpp_bin_float<local_digits10>, boost::multiprecision::et_off>;
+  #if defined(BOOST_HAS_FLOAT128)
+  using flt_float_type = boost::multiprecision::float128;
+  #endif
+
+  const std::size_t trials { trial_count };
+
+  std::vector<dbl_float_type> dbl_float_a_vec (trials);
+  std::vector<dbl_float_type> dbl_float_b_vec (dbl_float_a_vec.size());
+
+  std::vector<dec_float_type> dec_float_a_vec (dbl_float_a_vec.size());
+  std::vector<dec_float_type> dec_float_b_vec (dbl_float_a_vec.size());
+  std::vector<bin_float_type> bin_float_a_vec (dbl_float_a_vec.size());
+  std::vector<bin_float_type> bin_float_b_vec (dbl_float_a_vec.size());
+  #if defined(BOOST_HAS_FLOAT128)
+  std::vector<flt_float_type> flt_float_a_vec (dbl_float_a_vec.size());
+  std::vector<flt_float_type> flt_float_b_vec (dbl_float_a_vec.size());
+  #endif
+
+  for(std::size_t index { UINT8_C(0) }; index < dbl_float_a_vec.size(); ++index)
+  {
+    if(std::size_t { index % unsigned { UINT32_C(0x1000) } } == std::size_t { UINT8_C(0) })
+    {
+      eng_sgn.seed(util::util_pseudorandom_time_point_seed<typename eng_sgn_type::result_type>());
+      eng_dig.seed(util::util_pseudorandom_time_point_seed<typename eng_dig_type::result_type>());
+    }
+
+    auto
+      gen
+      {
+        [](bool is_positive, const dbl_float_type& gate = 0 )
+        {
+          dbl_float_type val { };
+
+          if(gate != 0)
+          {
+            while((val = dbl_float_type(generate_wide_decimal_value<dbl_float_type>())) < gate) { ; }
+          }
+          else
+          {
+            val = dbl_float_type(generate_wide_decimal_value<dbl_float_type>());
+          }
+
+          if(is_positive)
+          {
+            return val;
+          }
+          else
+          {
+            const bool next_positive { (dist_sgn(eng_sgn) != static_cast<std::uint32_t>(UINT8_C(0))) };
+
+            return (next_positive ? val : -val);
+          }
+        }
+      };
+
+    dbl_float_a_vec[index] = dbl_float_type { gen(true, dbl_float_type { 11 } / 10) };
+    dbl_float_b_vec[index] = dbl_float_type { gen(true, dbl_float_type { 11 } / 10) };
+
+    dec_float_a_vec[index] = dec_float_type { dbl_float_a_vec[index] };
+    dec_float_b_vec[index] = dec_float_type { dbl_float_b_vec[index] };
+
+    bin_float_a_vec[index] = bin_float_type { dbl_float_a_vec[index] };
+    bin_float_b_vec[index] = bin_float_type { dbl_float_b_vec[index] };
+
+    #if defined(BOOST_HAS_FLOAT128)
+    flt_float_a_vec[index] = flt_float_type { dbl_float_a_vec[index] };
+    flt_float_b_vec[index] = flt_float_type { dbl_float_b_vec[index] };
+    #endif
+  }
+
+  std::vector<dbl_float_type> dbl_float_c_vec (dbl_float_a_vec.size());
+  std::vector<dec_float_type> dec_float_c_vec (dbl_float_a_vec.size());
+  std::vector<bin_float_type> bin_float_c_vec (dbl_float_a_vec.size());
+  #if defined(BOOST_HAS_FLOAT128)
+  std::vector<flt_float_type> flt_float_c_vec (dbl_float_a_vec.size());
+  #endif
+
+  using stopwatch_type = concurrency::stopwatch;
+
+  stopwatch_type my_stopwatch { };
+
+  for(std::size_t count { UINT8_C(0) }; count < trials; ++count)
+  {
+    dbl_float_c_vec[count] = boost::math::cyl_bessel_j(dbl_float_a_vec[count], dbl_float_b_vec[count]);
+  }
+
+  const double elapsed_dbl { stopwatch_type::elapsed_time<double>(my_stopwatch) };
+
+  my_stopwatch.reset();
+
+  for(std::size_t count { UINT8_C(0) }; count < trials; ++count)
+  {
+    dec_float_c_vec[count] = boost::math::cyl_bessel_j(dec_float_a_vec[count], dec_float_b_vec[count]);
+  }
+
+  const double elapsed_dec { stopwatch_type::elapsed_time<double>(my_stopwatch) };
+
+  my_stopwatch.reset();
+
+  for(std::size_t count { UINT8_C(0) }; count < trials; ++count)
+  {
+    bin_float_c_vec[count] = boost::math::cyl_bessel_j(bin_float_a_vec[count], bin_float_b_vec[count]);
+  }
+
+  const double elapsed_bin { stopwatch_type::elapsed_time<double>(my_stopwatch) };
+
+  #if defined(BOOST_HAS_FLOAT128)
+  my_stopwatch.reset();
+
+  for(std::size_t count { UINT8_C(0) }; count < trials; ++count)
+  {
+    flt_float_c_vec[count] = boost::math::cyl_bessel_j(flt_float_a_vec[count], flt_float_b_vec[count]);
+  }
+
+  const double elapsed_flt { stopwatch_type::elapsed_time<double>(my_stopwatch) };
+  #endif
+
+  std::stringstream strm { };
+
+  strm << std::fixed << std::setprecision(3) << "elapsed_dbl     : " << elapsed_dbl << "s\n"
+       << std::fixed << std::setprecision(3) << "elapsed_dec     : " << elapsed_dec << "s\n"
+       << std::fixed << std::setprecision(3) << "elapsed_bin     : " << elapsed_bin << "s\n"
+  #if defined(BOOST_HAS_FLOAT128)
+       << std::fixed << std::setprecision(3) << "elapsed_flt     : " << elapsed_flt << "s\n"
+  #endif
+       << std::fixed << std::setprecision(3) << "ratio (dec/dbl) : " << elapsed_dec / elapsed_dbl << "\n"
+       << std::fixed << std::setprecision(3) << "ratio (bin/dbl) : " << elapsed_bin / elapsed_dbl << "\n"
+  #if defined(BOOST_HAS_FLOAT128)
+       << std::fixed << std::setprecision(3) << "ratio (flt/dbl) : " << elapsed_flt / elapsed_dbl << "\n"
+  #endif
+    ;
+
+  BOOST_TEST(elapsed_dec / elapsed_dbl > 1.0);
+  BOOST_TEST(elapsed_bin / elapsed_dbl > 1.0);
+
+  std::cout << strm.str() << std::endl;
+
+  std::cout << "verifying results...\n";
+
+  std::size_t count { UINT8_C(0) };
+
+  constexpr dbl_float_type tol_dbl { std::numeric_limits<dbl_float_type>::epsilon() * 0x400000 };
+
+  for(const auto& lhs : dbl_float_c_vec)
+  {
+    const dbl_float_type ctrl_dec { dec_float_c_vec[count] };
+    const dbl_float_type ctrl_bin { bin_float_c_vec[count] };
+    #if defined(BOOST_HAS_FLOAT128)
+    const dbl_float_type ctrl_flt { flt_float_c_vec[count] };
+    #endif
+
+    BOOST_TEST(is_close_fraction(lhs, ctrl_dec, tol_dbl));
+    BOOST_TEST(is_close_fraction(lhs, ctrl_bin, tol_dbl));
+    #if defined(BOOST_HAS_FLOAT128)
+    BOOST_TEST(is_close_fraction(lhs, ctrl_flt, tol_dbl));
+    #endif
+
+    ++count;
+  }
 }
 
-#if 0
+auto main() -> int
+{
+  constexpr std::size_t trials { UINT32_C(0x8000) };
+  constexpr std::size_t heats { UINT32_C(0x4) };
 
-See also: https://github.com/BoostGSoC21/multiprecision/issues/178#issuecomment-2580157139
+  for(std::size_t heat_count { UINT8_C(0) }; heat_count < heats; ++heat_count)
+  {
+    do_trials(trials);
+  }
 
-## section:float_performance Float Type Perfomance
-
-| Operation                       | `float128`           |`cpp_bin_float<32>`     | `cpp_dec_float<32>`    | `cpp_double_fp_backend<double>` |
-|---------------------------------|----------------------|------------------------|------------------------|---------------------------------|
-| `*`                             | 1.45209 (0.0530208s) | 1.4866 (0.054281s)     | 4.38403 (0.160076s)    | [*1] (0.0365135s)      |
-| `*(int)`                        | 1.54876 (0.0396009s) | 2.08722 (0.0533689s)   | 5.97016 (0.152653s)    | [*1] (0.0255694s)      |
-| `*(unsigned long long)`         | 1.66579 (0.083952s)  | 1.109 (0.0558912s)     | 3.64263 (0.18358s)     | [*1] (0.0503976s)      |
-| `*=(unsigned long long)`        | 1.70531 (0.0858822s) | 1.06861 (0.053817s)    | 3.47129 (0.17482s)     | [*1] (0.0503617s)      |
-| `+`                             | 2.4858 (0.0430852s)  | 5.38736 (0.0933768s)   | 3.06832 (0.0531818s)   | [*1] (0.0173326s)      |
-| `+(int)`                        | 2.96871 (0.0360276s) | 7.95354 (0.0965222s)   | 5.97545 (0.0725166s)   | [*1] (0.0121358s)      |
-| `+(unsigned long long)`         | 3.38383 (0.0739771s) | 5.51557 (0.120581s)    | 4.42454 (0.0967292s)   | [*1] (0.021862s)       |
-| `+=(unsigned long long)`        | 3.3944 (0.0760423s)  | 4.98724 (0.111726s)    | 3.92369 (0.0878995s)   | [*1] (0.0224023s)      |
-| `-`                             | 2.20087 (0.0389465s) | 5.40743 (0.0956897s)   | 3.24191 (0.0573686s)   | [*1] (0.0176959s)      |
-| `-(int)`                        | 3.21093 (0.0383358s) | 8.65589 (0.103344s)    | 7.53768 (0.0899936s)   | [*1] (0.0119392s)      |
-| `-(unsigned long long)`         | 3.45536 (0.075553s)  | 5.17747 (0.113208s)    | 4.63221 (0.101285s)    | [*1] (0.0218654s)      |
-| `-=(unsigned long long)`        | 2.73635 (0.0764208s) | 3.773 (0.105372s)      | 3.39784 (0.0948951s)   | [*1] (0.027928s)       |
-| `/`                             | 1.38437 (0.148412s)  | 7.55692 (0.810141s)    | 23.5198 (2.52144s)     | [*1] (0.107205s)       |
-| `/(int)`                        | 1.53126 (0.0384472s) | 6.85045 (0.172002s)    | 49.004 (1.2304s)       | [*1] (0.0251081s)      |
-| `/(unsigned long long)`         | 2.41876 (0.098966s)  | 9.80113 (0.401023s)    | 30.6916 (1.25578s)     | [*1] (0.040916s)       |
-| `/=(unsigned long long)`        | 1.88263 (0.0994829s) | 7.33976 (0.387852s)    | 23.6024 (1.24721s)     | [*1] (0.0528426s)      |
-| `construct`                     | [*1] (0.000550501s)  | 4.74042 (0.00260961s)  | 13.0381 (0.00717748s)  | 3.51129 (0.00193297s)  |
-| `construct(unsigned long long)` | 5.33373 (0.0401408s) | 2.82475 (0.0212586s)   | 3.38482 (0.0254736s)   | [*1] (0.00752583s)     |
-| `construct(unsigned)`           | 23.3495 (0.0403851s) | 12.4928 (0.0216075s)   | 14.3869 (0.0248834s)   | [*1] (0.00172959s)     |
-| `exp`                           | 1.37724 (1.66978s)   | 5.45487 (6.61357s)     | 5.19473 (6.29817s)     | [*1] (1.21242s)        |
-| `log`                           | [*1] (2.1149s)       | 7.38874 (15.6264s)     | 27.0206 (57.146s)      | 1.10118 (2.32888s)     |
-| `sqrt`                          | 25.9413 (0.53951s)   | 24.5484 (0.510541s)    | 131.925 (2.74368s)     | [*1] (0.0207973s)      |
-| `str`                           | [*1] (0.000419145s)  | 1.50425 (0.000630497s) | 1.22795 (0.000514689s) | 1.82207 (0.000763711s) |
-| `tan`                           | 1.3995 (1.69463s)    | 5.46528 (6.61782s)     | 5.20608 (6.30396s)     | [*1] (1.21088s)        |
-
-#endif
+  return boost::report_errors();
+}
