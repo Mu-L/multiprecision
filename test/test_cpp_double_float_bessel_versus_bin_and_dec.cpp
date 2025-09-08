@@ -4,8 +4,9 @@
 //  Software License, Version 1.0. (See accompanying file
 //  LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt
 
-// This version of "performance_test_df_local.cpp" is intended
-// for specific function-by-function comparisons with cpp_double_double.
+// This test file is executes a specific function-by-function
+// comparison of cpp_double_double with other backends having
+// similar digit counts.
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/math/special_functions/bessel.hpp>
@@ -15,7 +16,6 @@
 #include <boost/multiprecision/float128.hpp>
 #endif
 
-#include <charconv>
 #include <cstdint>
 #include <ctime>
 #include <limits>
@@ -362,7 +362,7 @@ auto do_trials(const std::size_t trial_count) -> void
 
 auto main() -> int
 {
-  constexpr std::size_t trials { UINT32_C(0x8000) };
+  constexpr std::size_t trials { UINT32_C(0x4000) };
   constexpr std::size_t heats { UINT32_C(0x4) };
 
   for(std::size_t heat_count { UINT8_C(0) }; heat_count < heats; ++heat_count)
