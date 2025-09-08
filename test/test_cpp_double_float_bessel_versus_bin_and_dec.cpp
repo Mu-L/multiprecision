@@ -162,7 +162,7 @@ auto generate_wide_decimal_value(int digits10_to_get = std::numeric_limits<Float
                 });
 
   return str_x;
-}
+} // LCOV_EXCL_LINE
 
 template<typename NumericType>
 auto is_close_fraction(const NumericType& a,
@@ -238,19 +238,21 @@ auto do_trials(const std::size_t trial_count) -> void
           }
           else
           {
-            val = dbl_float_type(generate_wide_decimal_value<dbl_float_type>());
+            val = dbl_float_type(generate_wide_decimal_value<dbl_float_type>()); // LCOV_EXCL_LINE
           }
 
           if(is_positive)
           {
             return val;
           }
+          // LCOV_EXCL_START
           else
           {
             const bool next_positive { (dist_sgn(eng_sgn) != static_cast<std::uint32_t>(UINT8_C(0))) };
 
-            return (next_positive ? val : -val);
+            return (next_positive ? val : -val); // LCOV_EXCL_LINE
           }
+          // LCOV_EXCL_STOP
         }
       };
 
