@@ -1528,7 +1528,6 @@ constexpr auto eval_pow(cpp_double_fp_backend<FloatingPointType>& result, const 
       constexpr double_float_type one { 1 };
 
       const int fpc_x { eval_fpclassify(x) };
-      const int fpc_a { eval_fpclassify(a) };
 
       if (fpc_a == FP_ZERO)
       {
@@ -1781,8 +1780,6 @@ constexpr auto eval_exp(cpp_double_fp_backend<FloatingPointType>& result, const 
          const double_float_type top = (n84 * r * (n7920 + (n240 + r2) * r2));
          const double_float_type bot = (n665280 + r * (-n332640 + r * (n75600 + r * (-n10080 + r * (n840 + (-n42 + r) * r)))));
 
-         constexpr double_float_type one { 1 };
-
          result = one + (top / bot);
 
          // Rescale the result.
@@ -1905,8 +1902,6 @@ constexpr auto eval_exp(cpp_double_fp_backend<FloatingPointType>& result, const 
          const double_float_type top = (n144 * r) * (n3603600 + r2 * (n120120 + r2 * (n770 + r2)));
          const double_float_type bot = (n518918400 + r * (-n259459200 + r * (n60540480 + r * (-n8648640 + r * (n831600 + r * (-n55440 + r * (n2520 + r * (-n72 + r))))))));
 
-         constexpr double_float_type one { 1 };
-
          result = one + (top / bot);
 
          // Rescale the result.
@@ -2011,7 +2006,7 @@ constexpr auto eval_exp(cpp_double_fp_backend<FloatingPointType>& result, const 
 
          double_float_type x_pow_n_div_n_fact(xh);
 
-         result = double_float_type(1U) + x_pow_n_div_n_fact;
+         result = one + x_pow_n_div_n_fact;
 
          double_float_type dummy { };
 
