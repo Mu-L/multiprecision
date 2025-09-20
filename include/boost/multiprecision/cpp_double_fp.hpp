@@ -1161,6 +1161,8 @@ class cpp_double_fp_backend
 template <typename FloatingPointType>
 constexpr auto cpp_double_fp_backend<FloatingPointType>::rd_string(const char* p_str) -> bool
 {
+   // Use an intermediate cpp_bin_float backend type for reading string input.
+
    cpp_bin_float_read_write_backend_type f_bin { };
 
    f_bin = p_str;
@@ -1197,95 +1199,106 @@ constexpr auto cpp_double_fp_backend<FloatingPointType>::rd_string(const char* p
          }()
       };
 
-   using cpp_bin_float_read_write_exp_type = typename cpp_bin_float_read_write_backend_type::exponent_type;
-
    const auto is_zero_or_subnormal =
    (
          (fpc == FP_ZERO)
-      || (expval_from_f_bin < static_cast<cpp_bin_float_read_write_exp_type>(local_double_fp_type::my_min_exponent))
+      || (expval_from_f_bin < static_cast<typename cpp_bin_float_read_write_backend_type::exponent_type>(local_double_fp_type::my_min_exponent))
    );
 
    if (is_zero_or_subnormal)
    {
       data.first  = float_type { 0.0F };
       data.second = float_type { 0.0F };
+
+      return true;
    }
-   else
+
+   float_type flt_inf_check_first { };
+
+   eval_convert_to(&flt_inf_check_first, f_bin);
+
+   bool is_definitely_inf { ((fpc == FP_INFINITE) || cpp_df_qf_detail::ccmath::isinf(flt_inf_check_first)) };
+
+   if (!is_definitely_inf)
    {
-      bool is_definitely_inf { (fpc == FP_INFINITE) };
-
-      if (!is_definitely_inf)
+      if (flt_inf_check_first > my_value_max().my_first())
       {
-         float_type flt_inf_check { };
+         cpp_bin_float_read_write_backend_type f_bin_inf_check(f_bin);
 
-         eval_convert_to(&flt_inf_check, f_bin);
+         eval_subtract(f_bin_inf_check, cpp_bin_float_read_write_backend_type(flt_inf_check_first));
 
-         if (flt_inf_check > my_value_max().my_first())
-         {
-            is_definitely_inf = true;
-         }
+         float_type flt_inf_check_second { };
+
+         eval_convert_to(&flt_inf_check_second, f_bin_inf_check);
+
+         is_definitely_inf = eval_gt(local_double_fp_type(flt_inf_check_first, flt_inf_check_second), my_value_max());
+      }
+   };
+
+   if (is_definitely_inf)
+   {
+      static_cast<void>(operator=(local_double_fp_type::my_value_inf()));
+
+      if (b_neg)
+      {
+        negate();
+      }
+
+      return true;
+   }
+
+   // The input string is normal. We will now extract its value.
+
+   data.first  = float_type { 0.0F };
+   data.second = float_type { 0.0F };
+
+   constexpr int pow2_scaling_for_small_input { cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits };
+
+   const auto has_pow2_scaling_for_small_input =
+   (
+      expval_from_f_bin < static_cast<int>(local_double_fp_type::my_min_exponent + pow2_scaling_for_small_input)
+   );
+
+   if (has_pow2_scaling_for_small_input)
+   {
+      eval_ldexp(f_bin, f_bin, pow2_scaling_for_small_input);
+   }
+
+   using local_builtin_float_type = typename std::conditional<(sizeof(float_type) <= sizeof(double)), double, float_type>::type;
+
+   constexpr unsigned
+      digit_limit
+      {
+         static_cast<unsigned>
+         (
+            static_cast<int>
+            (
+                   (local_double_fp_type::my_digits / cpp_df_qf_detail::ccmath::numeric_limits<local_builtin_float_type>::digits)
+               + (((local_double_fp_type::my_digits % cpp_df_qf_detail::ccmath::numeric_limits<local_builtin_float_type>::digits) != 0) ? 1 : 0)
+            )
+            * cpp_df_qf_detail::ccmath::numeric_limits<local_builtin_float_type>::digits
+         )
       };
 
-      if (is_definitely_inf)
-      {
-         static_cast<void>(operator=(local_double_fp_type::my_value_inf()));
+   for(auto i = static_cast<unsigned>(UINT8_C(0));
+            i < digit_limit;
+            i = static_cast<unsigned>(i + static_cast<unsigned>(cpp_df_qf_detail::ccmath::numeric_limits<local_builtin_float_type>::digits)))
+   {
+      local_builtin_float_type flt_part { };
 
-         if (b_neg) { negate(); }
-      }
-      else
-      {
-         data.first  = float_type { 0.0F };
-         data.second = float_type { 0.0F };
+      eval_convert_to(&flt_part, f_bin);
 
-         constexpr int pow2_scaling_for_small_input { cpp_df_qf_detail::ccmath::numeric_limits<float_type>::digits };
+      eval_subtract(f_bin, cpp_bin_float_read_write_backend_type(flt_part));
 
-         const auto has_pow2_scaling_for_small_input =
-         (
-            expval_from_f_bin < static_cast<int>(local_double_fp_type::my_min_exponent + pow2_scaling_for_small_input)
-         );
-
-         if (has_pow2_scaling_for_small_input)
-         {
-            eval_ldexp(f_bin, f_bin, pow2_scaling_for_small_input);
-         }
-
-         using local_builtin_float_type = typename std::conditional<(sizeof(float_type) <= sizeof(double)), double, float_type>::type;
-
-         constexpr unsigned
-            digit_limit
-            {
-               static_cast<unsigned>
-               (
-                  static_cast<int>
-                  (
-                         (local_double_fp_type::my_digits / cpp_df_qf_detail::ccmath::numeric_limits<local_builtin_float_type>::digits)
-                     + (((local_double_fp_type::my_digits % cpp_df_qf_detail::ccmath::numeric_limits<local_builtin_float_type>::digits) != 0) ? 1 : 0)
-                  )
-                  * cpp_df_qf_detail::ccmath::numeric_limits<local_builtin_float_type>::digits
-               )
-            };
-
-         for(auto i = static_cast<unsigned>(UINT8_C(0));
-                  i < digit_limit;
-                  i = static_cast<unsigned>(i + static_cast<unsigned>(cpp_df_qf_detail::ccmath::numeric_limits<local_builtin_float_type>::digits)))
-         {
-            local_builtin_float_type flt_part { };
-
-            eval_convert_to(&flt_part, f_bin);
-
-            eval_subtract(f_bin, cpp_bin_float_read_write_backend_type(flt_part));
-
-            eval_add(*this, local_double_fp_type { flt_part });
-         }
-
-         if (has_pow2_scaling_for_small_input)
-         {
-            eval_ldexp(*this, *this, -pow2_scaling_for_small_input);
-         }
-
-         if (b_neg) { negate(); }
-      }
+      eval_add(*this, local_double_fp_type { flt_part });
    }
+
+   if (has_pow2_scaling_for_small_input)
+   {
+      eval_ldexp(*this, *this, -pow2_scaling_for_small_input);
+   }
+
+   if (b_neg) { negate(); }
 
    return true;
 }

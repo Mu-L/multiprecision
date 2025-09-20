@@ -966,6 +966,59 @@ namespace local
       }
     }
   }
+
+  auto test_double_fp_string_gt_max() -> void
+  {
+    using float_backend_larger_type = boost::multiprecision::cpp_bin_float<50, boost::multiprecision::digit_base_10, void, std::int32_t>;
+
+    using float_larger_type = boost::multiprecision::number<float_backend_larger_type, boost::multiprecision::et_off>;
+
+    std::mt19937_64 gen { time_point<typename std::mt19937_64::result_type>() };
+
+    auto dis =
+      std::uniform_real_distribution<double>
+      {
+        static_cast<double>(1.01),
+        static_cast<double>(1.04)
+      };
+
+    {
+      for(auto index = static_cast<unsigned>(UINT8_C(0)); index < static_cast<unsigned>(UINT8_C(32)); ++index)
+      {
+        const bool make_neg { ((index % unsigned { UINT8_C(2) }) != unsigned { UINT8_C(0) }) };
+
+        const double dbl_fuzz { 1.0 - dis(gen) * std::numeric_limits<double>::epsilon() };
+
+        float_larger_type
+          flt_larger
+          (
+              float_larger_type((std::numeric_limits<boost::multiprecision::cpp_double_double>::max)())
+            / dbl_fuzz
+          );
+
+        if(make_neg)
+        {
+          flt_larger = -flt_larger;
+        }
+
+        std::stringstream strm { };
+
+        strm << std::setprecision(std::numeric_limits<boost::multiprecision::cpp_double_double>::max_digits10)
+             << flt_larger;
+
+        const std::string str_ovf { strm.str() };
+
+        const boost::multiprecision::cpp_double_double val_ovf(str_ovf.c_str());
+
+        BOOST_TEST((boost::multiprecision::isinf)(val_ovf));
+
+        if(make_neg)
+        {
+          BOOST_TEST((boost::multiprecision::signbit)(val_ovf));
+        }
+      }
+    }
+  }
 } // namespace local
 
 auto main() -> int
@@ -1006,6 +1059,7 @@ auto main() -> int
     static_cast<void>(local::test_edges_ovf_und<double_float_type>());
     static_cast<void>(local::test_edges_trig<double_float_type>());
     local::test_frexp_edge<double_float_type>();
+    local::test_double_fp_string_gt_max();
   }
 
   {
