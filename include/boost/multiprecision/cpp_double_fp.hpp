@@ -249,7 +249,7 @@ class cpp_double_fp_backend
              typename ::std::enable_if<(    cpp_df_qf_detail::is_floating_point<OtherFloatType>::value
                                         && (!std::is_same<FloatingPointType, OtherFloatType>::value))>::type const* = nullptr>
    constexpr cpp_double_fp_backend(const cpp_double_fp_backend<OtherFloatType>& a)
-      : cpp_double_fp_backend(cpp_double_fp_backend(a.my_first()) + a.my_second()) { }
+      : cpp_double_fp_backend(cpp_double_fp_backend(a.my_first()) += a.my_second()) { }
 
    // Constructors from integers.
    template <typename SignedIntegralType,
