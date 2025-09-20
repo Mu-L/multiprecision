@@ -4,7 +4,7 @@
 //  Software License, Version 1.0. (See accompanying file
 //  LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt
 
-// This test file is executes a specific function-by-function
+// This test file executes a specific function-by-function
 // comparison of cpp_double_double with other backends having
 // similar digit counts.
 
@@ -149,10 +149,10 @@ auto generate_wide_decimal_value(int digits10_to_get = std::numeric_limits<Float
   std::string str_x(static_cast<std::size_t>(digits10_to_get + 1), '0');
 
   // Get the leading digit before the decimal point.
-  str_x[std::string::size_type { UINT8_C(0) }] = static_cast<char>(dist_dig(eng_dig));
+  str_x.at(std::string::size_type { UINT8_C(0) }) = static_cast<char>(dist_dig(eng_dig));
 
   // Insert a decimal point.
-  str_x[std::string::size_type { UINT8_C(1) }] = '.';
+  str_x.at(std::string::size_type { UINT8_C(1) }) = '.';
 
   std::generate(str_x.begin() + std::string::size_type { UINT8_C(2) },
                 str_x.end(),
@@ -190,6 +190,7 @@ auto is_close_fraction(const NumericType& a,
 auto do_trials(const std::size_t trial_count) -> void
 {
   static std::size_t heat_count { };
+  static std::size_t total_count { };
 
   std::cout << "\nheat_count: " << ++heat_count << std::endl;
 
@@ -219,11 +220,13 @@ auto do_trials(const std::size_t trial_count) -> void
 
   for(std::size_t index { UINT8_C(0) }; index < dbl_float_a_vec.size(); ++index)
   {
-    if(std::size_t { index % unsigned { UINT32_C(0x1000) } } == std::size_t { UINT8_C(0) })
+    if(std::size_t { total_count % unsigned { UINT32_C(0x1000) } } == std::size_t { UINT8_C(0) })
     {
       eng_sgn.seed(util::util_pseudorandom_time_point_seed<typename eng_sgn_type::result_type>());
       eng_dig.seed(util::util_pseudorandom_time_point_seed<typename eng_dig_type::result_type>());
     }
+
+    ++total_count;
 
     auto
       gen
@@ -256,18 +259,18 @@ auto do_trials(const std::size_t trial_count) -> void
         }
       };
 
-    dbl_float_a_vec[index] = dbl_float_type { gen(true, dbl_float_type { 11 } / 10) };
-    dbl_float_b_vec[index] = dbl_float_type { gen(true, dbl_float_type { 11 } / 10) };
+    dbl_float_a_vec.at(index) = dbl_float_type { gen(true, dbl_float_type { 11 } / 10) };
+    dbl_float_b_vec.at(index) = dbl_float_type { gen(true, dbl_float_type { 11 } / 10) };
 
-    dec_float_a_vec[index] = dec_float_type { dbl_float_a_vec[index] };
-    dec_float_b_vec[index] = dec_float_type { dbl_float_b_vec[index] };
+    dec_float_a_vec.at(index) = dec_float_type { dbl_float_a_vec.at(index) };
+    dec_float_b_vec.at(index) = dec_float_type { dbl_float_b_vec.at(index) };
 
-    bin_float_a_vec[index] = bin_float_type { dbl_float_a_vec[index] };
-    bin_float_b_vec[index] = bin_float_type { dbl_float_b_vec[index] };
+    bin_float_a_vec.at(index) = bin_float_type { dbl_float_a_vec.at(index) };
+    bin_float_b_vec.at(index) = bin_float_type { dbl_float_b_vec.at(index) };
 
     #if defined(BOOST_HAS_FLOAT128)
-    flt_float_a_vec[index] = flt_float_type { dbl_float_a_vec[index] };
-    flt_float_b_vec[index] = flt_float_type { dbl_float_b_vec[index] };
+    flt_float_a_vec.at(index) = flt_float_type { dbl_float_a_vec.at(index) };
+    flt_float_b_vec.at(index) = flt_float_type { dbl_float_b_vec.at(index) };
     #endif
   }
 
@@ -284,7 +287,7 @@ auto do_trials(const std::size_t trial_count) -> void
 
   for(std::size_t count { UINT8_C(0) }; count < trials; ++count)
   {
-    dbl_float_c_vec[count] = boost::math::cyl_bessel_j(dbl_float_a_vec[count], dbl_float_b_vec[count]);
+    dbl_float_c_vec.at(count) = boost::math::cyl_bessel_j(dbl_float_a_vec.at(count), dbl_float_b_vec.at(count));
   }
 
   const double elapsed_dbl { stopwatch_type::elapsed_time<double>(my_stopwatch) };
@@ -293,7 +296,7 @@ auto do_trials(const std::size_t trial_count) -> void
 
   for(std::size_t count { UINT8_C(0) }; count < trials; ++count)
   {
-    dec_float_c_vec[count] = boost::math::cyl_bessel_j(dec_float_a_vec[count], dec_float_b_vec[count]);
+    dec_float_c_vec.at(count) = boost::math::cyl_bessel_j(dec_float_a_vec.at(count), dec_float_b_vec.at(count));
   }
 
   const double elapsed_dec { stopwatch_type::elapsed_time<double>(my_stopwatch) };
@@ -302,7 +305,7 @@ auto do_trials(const std::size_t trial_count) -> void
 
   for(std::size_t count { UINT8_C(0) }; count < trials; ++count)
   {
-    bin_float_c_vec[count] = boost::math::cyl_bessel_j(bin_float_a_vec[count], bin_float_b_vec[count]);
+    bin_float_c_vec.at(count) = boost::math::cyl_bessel_j(bin_float_a_vec.at(count), bin_float_b_vec.at(count));
   }
 
   const double elapsed_bin { stopwatch_type::elapsed_time<double>(my_stopwatch) };
@@ -312,7 +315,7 @@ auto do_trials(const std::size_t trial_count) -> void
 
   for(std::size_t count { UINT8_C(0) }; count < trials; ++count)
   {
-    flt_float_c_vec[count] = boost::math::cyl_bessel_j(flt_float_a_vec[count], flt_float_b_vec[count]);
+    flt_float_c_vec.at(count) = boost::math::cyl_bessel_j(flt_float_a_vec.at(count), flt_float_b_vec.at(count));
   }
 
   const double elapsed_flt { stopwatch_type::elapsed_time<double>(my_stopwatch) };

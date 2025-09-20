@@ -249,11 +249,7 @@ class cpp_double_fp_backend
              typename ::std::enable_if<(    cpp_df_qf_detail::is_floating_point<OtherFloatType>::value
                                         && (!std::is_same<FloatingPointType, OtherFloatType>::value))>::type const* = nullptr>
    constexpr cpp_double_fp_backend(const cpp_double_fp_backend<OtherFloatType>& a)
-      : cpp_double_fp_backend(a.my_first())
-   {
-      // TBD: Maybe specialize this constructor for cases either wider or less wide.
-      operator+=(a.my_second());
-   }
+      : cpp_double_fp_backend(cpp_double_fp_backend(a.my_first()) + a.my_second()) { }
 
    // Constructors from integers.
    template <typename SignedIntegralType,
@@ -388,9 +384,6 @@ class cpp_double_fp_backend
    {
       std::size_t result { UINT8_C(0) };
 
-      int n_first  { };
-      int n_second { };
-
       #if defined(BOOST_MP_CPP_DOUBLE_FP_HAS_FLOAT128)
       using local_float_type = typename std::conditional<::std::is_same<float_type, ::boost::float128_type>::value,
                                                          long double,
@@ -399,10 +392,8 @@ class cpp_double_fp_backend
       using local_float_type = float_type;
       #endif
 
-      boost::multiprecision::detail::hash_combine(result, static_cast<local_float_type>(cpp_df_qf_detail::ccmath::frexp(data.first,  &n_first)));
-      boost::multiprecision::detail::hash_combine(result, static_cast<local_float_type>(cpp_df_qf_detail::ccmath::frexp(data.second, &n_second)));
-      boost::multiprecision::detail::hash_combine(result, n_first);
-      boost::multiprecision::detail::hash_combine(result, n_second);
+      boost::multiprecision::detail::hash_combine(result, static_cast<local_float_type>(data.first));
+      boost::multiprecision::detail::hash_combine(result, static_cast<local_float_type>(data.second));
 
       return result;
    }
@@ -895,9 +886,9 @@ class cpp_double_fp_backend
       // Use cpp_bin_float when writing to string. This is similar
       // to the use of cpp_bin_float when reading from string.
 
-      cpp_bin_float_read_write_type f_bin { data.first };
+      cpp_bin_float_read_write_backend_type f_bin { data.first };
 
-      f_bin += data.second;
+      eval_add(f_bin, cpp_bin_float_read_write_backend_type(data.second));
 
       return f_bin.str(number_of_digits, format_flags);
    }
@@ -1030,8 +1021,6 @@ class cpp_double_fp_backend
 
    using cpp_bin_float_read_write_backend_type = boost::multiprecision::backends::cpp_bin_float<static_cast<unsigned>(my_digits), digit_base_2, void, int, cpp_df_qf_detail::ccmath::numeric_limits<float_type>::min_exponent, cpp_df_qf_detail::ccmath::numeric_limits<float_type>::max_exponent>;
    using cpp_bin_float_read_write_exp_type     = typename cpp_bin_float_read_write_backend_type::exponent_type;
-
-   using cpp_bin_float_read_write_type = boost::multiprecision::number<cpp_bin_float_read_write_backend_type, boost::multiprecision::et_off>;
 
    constexpr auto rd_string(const char* pstr) -> bool;
 
@@ -1173,9 +1162,11 @@ class cpp_double_fp_backend
 template <typename FloatingPointType>
 constexpr auto cpp_double_fp_backend<FloatingPointType>::rd_string(const char* pstr) -> bool
 {
-   cpp_bin_float_read_write_type f_bin { pstr };
+   cpp_bin_float_read_write_backend_type f_bin { };
 
-   const int fpc { fpclassify(f_bin) };
+   f_bin = pstr;
+
+   const int fpc { eval_fpclassify(f_bin) };
 
    const bool is_definitely_nan { (fpc == FP_NAN) };
 
@@ -1187,18 +1178,20 @@ constexpr auto cpp_double_fp_backend<FloatingPointType>::rd_string(const char* p
    }
    else
    {
-      const bool b_neg { (signbit(f_bin) == 1) };
+      const bool b_neg { (eval_signbit(f_bin) == 1) };
 
-      if (b_neg) { f_bin = -f_bin; }
+      if (b_neg) { f_bin.negate(); }
 
       const int
          expval_from_f_bin
          {
             [&f_bin]()
             {
-               int expval;
+               int expval { };
 
-               frexp(f_bin, &expval);
+               cpp_bin_float_read_write_backend_type dummy { };
+
+               eval_frexp(dummy, f_bin, &expval);
 
                return expval;
             }()
@@ -1217,7 +1210,15 @@ constexpr auto cpp_double_fp_backend<FloatingPointType>::rd_string(const char* p
       }
       else
       {
-         const auto is_definitely_inf = (f_bin > (::std::numeric_limits<cpp_bin_float_read_write_type>::max)());
+         // TBD: This is the last use of cpp_bin_float_read_write_type
+         // (instead of using the backend cpp_bin_float type). Can this
+         // usage be removed and we then use only the backend type?
+
+         using cpp_bin_float_read_write_type = boost::multiprecision::number<cpp_bin_float_read_write_backend_type, boost::multiprecision::et_off>;
+
+         const cpp_bin_float_read_write_backend_type f_bin_max((::std::numeric_limits<cpp_bin_float_read_write_type>::max)().backend());
+
+         const bool is_definitely_inf { (f_bin.compare(f_bin_max) == 1) };
 
          if (is_definitely_inf)
          {
@@ -1241,27 +1242,32 @@ constexpr auto cpp_double_fp_backend<FloatingPointType>::rd_string(const char* p
 
             if (has_pow2_scaling_for_small_input)
             {
-               f_bin = ldexp(f_bin, pow2_scaling_for_small_input);
+               eval_ldexp(f_bin, f_bin, pow2_scaling_for_small_input);
             }
 
-            constexpr auto dig_lim =
-               static_cast<unsigned>
-               (
-                  static_cast<int>
+            constexpr unsigned
+               digit_limit
+               {
+                  static_cast<unsigned>
                   (
-                         (local_double_fp_type::my_digits / cpp_df_qf_detail::ccmath::numeric_limits<local_builtin_float_type>::digits)
-                     + (((local_double_fp_type::my_digits % cpp_df_qf_detail::ccmath::numeric_limits<local_builtin_float_type>::digits) != 0) ? 1 : 0)
+                     static_cast<int>
+                     (
+                            (local_double_fp_type::my_digits / cpp_df_qf_detail::ccmath::numeric_limits<local_builtin_float_type>::digits)
+                        + (((local_double_fp_type::my_digits % cpp_df_qf_detail::ccmath::numeric_limits<local_builtin_float_type>::digits) != 0) ? 1 : 0)
+                     )
+                     * cpp_df_qf_detail::ccmath::numeric_limits<local_builtin_float_type>::digits
                   )
-                  * cpp_df_qf_detail::ccmath::numeric_limits<local_builtin_float_type>::digits
-               );
+               };
 
             for(auto i = static_cast<unsigned>(UINT8_C(0));
-                     i < dig_lim;
+                     i < digit_limit;
                      i = static_cast<unsigned>(i + static_cast<unsigned>(cpp_df_qf_detail::ccmath::numeric_limits<local_builtin_float_type>::digits)))
             {
-               const local_builtin_float_type f { static_cast<local_builtin_float_type>(f_bin) };
+               local_builtin_float_type f { };
 
-               f_bin -= cpp_bin_float_read_write_type { f };
+               eval_convert_to(&f, f_bin);
+
+               eval_subtract(f_bin, cpp_bin_float_read_write_backend_type(f));
 
                eval_add(*this, local_double_fp_type { f });
             }
