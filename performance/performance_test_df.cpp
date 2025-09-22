@@ -226,7 +226,7 @@ void local::test32()
    static_assert(digits10_for_performance_test >= 32, "Error: Too few digits for performance comparison");
 
    using cpp_bin_float_type =
-      boost::multiprecision::number<boost::multiprecision::backends::cpp_bin_float<digits10_for_performance_test>,
+      boost::multiprecision::number<boost::multiprecision::backends::cpp_bin_float<digits10_for_performance_test, boost::multiprecision::digit_base_10, void>,
                                     boost::multiprecision::et_off>;
 
    test<cpp_bin_float_type>("cpp_bin_float", digits10_for_performance_test);
