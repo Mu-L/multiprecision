@@ -125,6 +125,8 @@ constexpr auto log_impl(Real x) noexcept -> Real
 {
    int n2 { };
 
+   // Scale the argument down.
+
    Real x2 { ::boost::multiprecision::backends::cpp_df_qf_detail::ccmath::detail::frexp_impl(x, &n2) };
 
    if (x2 > static_cast<Real>(0.875L))
@@ -134,18 +136,17 @@ constexpr auto log_impl(Real x) noexcept -> Real
      ++n2;
    }
 
-   Real s { log_impl_pade(x2) };
+   // Estimate the logarithm of the argument to roughly half
+   // the precision of Real.
+   const Real s { log_impl_pade(x2) };
 
+   // Compute the exponent function to the full precision of Real.
    const Real E { exp_impl(s) };
 
-   // Do one single step of Newton-Raphson iteration.
-   s = s + ((x2 - E) / E);
+   // Perform one single step of Newton-Raphson iteration
+   // and scale the result back up.
 
-   Real xn2 { static_cast<Real>(n2) * constant_ln_two<Real>() };
-
-   s += xn2;
-
-   return s;
+   return (s + ((x2 - E) / E)) + Real { static_cast<Real>(n2) * constant_ln_two<Real>() };
 }
 // LCOV_EXCL_STOP
 
