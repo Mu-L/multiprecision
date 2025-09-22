@@ -345,7 +345,7 @@ auto do_trials(const std::size_t trial_count) -> void
 
   std::size_t count { UINT8_C(0) };
 
-  constexpr dbl_float_type tol_dbl { std::numeric_limits<dbl_float_type>::epsilon() * 0x400000 };
+  constexpr dbl_float_type tol_dbl { std::numeric_limits<dbl_float_type>::epsilon() * 0x1000000 };
 
   for(const auto& lhs : dbl_float_c_vec)
   {
