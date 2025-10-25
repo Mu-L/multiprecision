@@ -59,6 +59,7 @@ project : requirements
    <toolset>msvc:<link>static
    <toolset>msvc:<warnings>all
    <toolset>msvc:<cxxflags>/fp\:precise
+   <toolset>gcc,<target-os>windows:<cxxflags>"-Wa,-mbig-obj"
    <toolset>intel-win:<runtime-link>static
    <toolset>intel-win:<link>static
    <toolset>clang-win:<link>static  # Clang-win does not generate .dlls.
@@ -188,7 +189,7 @@ test-suite arithmetic_tests :
    [ run test_arithmetic_dbg_adptr1m.cpp no_eh_support  : : : <toolset>msvc:<cxxflags>/bigobj [ check-target-builds ../config//has_float128 : <source>quadmath ] ]
    [ run test_arithmetic_dbg_adptr2.cpp no_eh_support : : : <toolset>msvc:<cxxflags>/bigobj [ check-target-builds ../config//has_float128 : <source>quadmath ] ]
 
-   [ run test_arithmetic_cpp_complex_dbg_adptr.cpp : : : <toolset>gcc-mingw:<cxxflags>-Wa,-mbig-obj <toolset>msvc:<cxxflags>/bigobj [ check-target-builds ../config//has_float128 : <source>quadmath ] ]
+   [ run test_arithmetic_cpp_complex_dbg_adptr.cpp : : : <toolset>gcc-mingw:<cxxflags>-Wa,-mbig-obj <debug-symbols>off <toolset>msvc:<cxxflags>/bigobj [ check-target-builds ../config//has_float128 : <source>quadmath ] ]
    [ run test_arithmetic_cpp_int_dbg_adptr.cpp : : : <toolset>msvc:<cxxflags>/bigobj [ check-target-builds ../config//has_float128 : <source>quadmath ] ]
    [ run test_arithmetic_cpp_rat_dbg_adptr.cpp : : : <toolset>msvc:<cxxflags>/bigobj [ check-target-builds ../config//has_float128 : <source>quadmath ] ]
    [ run test_arithmetic_mpf_dbg_adptr.cpp gmp : : : <toolset>msvc:<cxxflags>/bigobj [ check-target-builds ../config//has_gmp : : <build>no ] [ check-target-builds ../config//has_float128 : <source>quadmath ] ]
@@ -198,7 +199,7 @@ test-suite arithmetic_tests :
    [ run test_arithmetic_mpq_dbg_adptr.cpp gmp : : : <toolset>msvc:<cxxflags>/bigobj [ check-target-builds ../config//has_gmp : : <build>no ] [ check-target-builds ../config//has_float128 : <source>quadmath ] ]
    [ run test_arithmetic_mpz_dbg_adptr.cpp gmp : : : <toolset>msvc:<cxxflags>/bigobj [ check-target-builds ../config//has_gmp : : <build>no ] [ check-target-builds ../config//has_float128 : <source>quadmath ] ]
 
-   [ run test_arithmetic_cpp_complex_logged_adptr.cpp : : : <toolset>gcc-mingw:<cxxflags>-Wa,-mbig-obj <toolset>msvc:<cxxflags>/bigobj [ check-target-builds ../config//has_float128 : <source>quadmath ] ]
+   [ run test_arithmetic_cpp_complex_logged_adptr.cpp : : : <toolset>gcc-mingw:<cxxflags>-Wa,-mbig-obj <debug-symbols>off <toolset>msvc:<cxxflags>/bigobj [ check-target-builds ../config//has_float128 : <source>quadmath ] ]
    [ run test_arithmetic_cpp_int_logged_adptr.cpp : : : <toolset>msvc:<cxxflags>/bigobj [ check-target-builds ../config//has_float128 : <source>quadmath ] ]
    [ run test_arithmetic_cpp_rat_logged_adptr.cpp : : : <toolset>msvc:<cxxflags>/bigobj [ check-target-builds ../config//has_float128 : <source>quadmath ] ]
    [ run test_arithmetic_mpf_logged_adptr.cpp gmp : : : <toolset>msvc:<cxxflags>/bigobj [ check-target-builds ../config//has_gmp : : <build>no ] [ check-target-builds ../config//has_float128 : <source>quadmath ] ]
