@@ -833,12 +833,17 @@ class numeric_limits<boost::multiprecision::number<boost::multiprecision::backen
    static constexpr bool has_quiet_NaN                 = true;
    static constexpr bool has_signaling_NaN             = false;
 #ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4996)
+#  pragma warning(push)
+#  pragma warning(disable : 4996)
+#elif (defined(__clang__) && (__clang_major__ >= 17))
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
    static constexpr float_denorm_style                                has_denorm      = denorm_present;
 #ifdef _MSC_VER
 #pragma warning(pop)
+#elif (defined(__clang__) && (__clang_major__ >= 17))
+#  pragma clang diagnostic pop
 #endif
    static constexpr bool                                              has_denorm_loss = true;
    static BOOST_MP_CXX14_CONSTEXPR number_type                        infinity() { return HUGE_VAL; /* conversion from double infinity OK */ }
@@ -902,14 +907,20 @@ constexpr bool numeric_limits<boost::multiprecision::number<boost::multiprecisio
 
 template <boost::multiprecision::expression_template_option ExpressionTemplates>
 constexpr float_round_style numeric_limits<boost::multiprecision::number<boost::multiprecision::backends::float128_backend, ExpressionTemplates> >::round_style;
+
 #ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4996)
+#  pragma warning(push)
+#  pragma warning(disable : 4996)
+#elif (defined(__clang__) && (__clang_major__ >= 17))
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
 template <boost::multiprecision::expression_template_option ExpressionTemplates>
 constexpr float_denorm_style numeric_limits<boost::multiprecision::number<boost::multiprecision::backends::float128_backend, ExpressionTemplates> >::has_denorm;
 #ifdef _MSC_VER
 #pragma warning(pop)
+#elif (defined(__clang__) && (__clang_major__ >= 17))
+#  pragma clang diagnostic pop
 #endif
 
 } // namespace std
