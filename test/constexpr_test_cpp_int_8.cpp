@@ -11,7 +11,6 @@
 
 int main()
 {
-   // ensure that 
    namespace mp = boost::multiprecision;
 
    using int512_et_off = mp::number<mp::cpp_int_backend<
