@@ -122,9 +122,7 @@ namespace util {
 template<typename UnsignedIntegralType>
 auto util_fixed_seed() -> UnsignedIntegralType
 {
-  using stopwatch_type = concurrency::stopwatch;
-
-  return static_cast<UnsignedIntegralType>(42U);
+  return UnsignedIntegralType { UINT8_C(42) };
 }
 
 } // namespace util
