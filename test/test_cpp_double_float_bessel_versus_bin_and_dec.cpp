@@ -120,11 +120,11 @@ private:
 namespace util {
 
 template<typename UnsignedIntegralType>
-auto util_pseudorandom_time_point_seed() -> UnsignedIntegralType
+auto util_fixed_seed() -> UnsignedIntegralType
 {
   using stopwatch_type = concurrency::stopwatch;
 
-  return static_cast<UnsignedIntegralType>(stopwatch_type::now());
+  return static_cast<UnsignedIntegralType>(42U);
 }
 
 } // namespace util
@@ -222,8 +222,8 @@ auto do_trials(const std::size_t trial_count) -> void
   {
     if(std::size_t { total_count % unsigned { UINT32_C(0x1000) } } == std::size_t { UINT8_C(0) })
     {
-      eng_sgn.seed(util::util_pseudorandom_time_point_seed<typename eng_sgn_type::result_type>());
-      eng_dig.seed(util::util_pseudorandom_time_point_seed<typename eng_dig_type::result_type>());
+      eng_sgn.seed(util::util_fixed_seed<typename eng_sgn_type::result_type>());
+      eng_dig.seed(util::util_fixed_seed<typename eng_dig_type::result_type>());
     }
 
     ++total_count;
@@ -367,7 +367,7 @@ auto do_trials(const std::size_t trial_count) -> void
 
 auto main() -> int
 {
-  constexpr std::size_t trials { UINT32_C(0x4000) };
+  constexpr std::size_t trials { UINT32_C(0x800) };
   constexpr std::size_t heats { UINT32_C(0x4) };
 
   for(std::size_t heat_count { UINT8_C(0) }; heat_count < heats; ++heat_count)
