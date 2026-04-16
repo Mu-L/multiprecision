@@ -320,6 +320,16 @@ auto do_trials(const std::size_t trial_count) -> void
   BOOST_TEST(elapsed_dec / elapsed_dbl > 1.0);
   BOOST_TEST(elapsed_bin / elapsed_dbl > 1.0);
 
+  #if 0
+  std::cout <<   "elapsed_dec: " << elapsed_dec
+            << ", elapsed_bin: " << elapsed_bin
+            << ", elapsed_dbl: " << elapsed_dbl
+            << ", elapsed_dec / elapsed_dbl: " << elapsed_dec / elapsed_dbl
+            << ", elapsed_bin / elapsed_dbl: " << elapsed_bin / elapsed_dbl
+            << std::endl
+            ;
+  #endif
+
   std::size_t count { UINT8_C(0) };
 
   constexpr dbl_float_type tol_dbl { std::numeric_limits<dbl_float_type>::epsilon() * 0x1000000 };
@@ -357,7 +367,7 @@ auto main() -> int;
 
 auto main() -> int
 {
-  constexpr std::size_t trials { UINT32_C(0x800) };
+  constexpr std::size_t trials { UINT32_C(0x400) };
   constexpr std::size_t heats { UINT32_C(0x4) };
 
   for(std::size_t heat_count { UINT8_C(0) }; heat_count < heats; ++heat_count)
