@@ -20,6 +20,7 @@
 #include <cfloat>
 #include <tuple>
 #include <cstring>
+#include <complex>
 #include <boost/multiprecision/detail/standalone_config.hpp>
 #include <boost/multiprecision/number.hpp>
 #include <boost/multiprecision/detail/hash.hpp>
@@ -708,6 +709,29 @@ inline boost::multiprecision::number<float128_backend, ExpressionTemplates> rsqr
    boost::multiprecision::number<float128_backend, ExpressionTemplates> res;
    eval_rsqrt(res.backend(), arg.backend());
    return res;
+}
+
+// The default std::abs(std::complex<>) implementation normalizes by max(|re|, |im|),
+// which yields NaN when an input is infinite (inf/inf).
+// Per IEEE 754, the result must be +infinity if either component is infinite, even if the other is NaN.
+template <boost::multiprecision::expression_template_option ExpressionTemplates>
+inline boost::multiprecision::number<float128_backend, ExpressionTemplates>
+abs BOOST_PREVENT_MACRO_SUBSTITUTION(const std::complex<boost::multiprecision::number<float128_backend, ExpressionTemplates>>& z)
+{
+   using number_type = boost::multiprecision::number<float128_backend, ExpressionTemplates>;
+   const float128_type re_v = z.real().backend().value();
+   const float128_type im_v = z.imag().backend().value();
+#ifdef BOOST_MP_USE_FLOAT128
+   return number_type(::hypotq(re_v, im_v));
+#else
+   if (isinfq(re_v) || isinfq(im_v))
+   {
+      return std::numeric_limits<number_type>::infinity();
+   }
+   const float128_type re_abs = re_v < 0 ? -re_v : re_v;
+   const float128_type im_abs = im_v < 0 ? -im_v : im_v;
+   return number_type(sqrtq(re_abs * re_abs + im_abs * im_abs));
+#endif
 }
 
 #ifndef BOOST_MP_USE_QUAD
