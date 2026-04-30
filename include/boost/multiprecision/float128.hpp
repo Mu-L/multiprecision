@@ -296,6 +296,14 @@ struct float128_backend
    {
       return m_value;
    }
+   BOOST_MP_CXX14_CONSTEXPR float128_type& data()
+   {
+       return m_value;
+   }
+   BOOST_MP_CXX14_CONSTEXPR const float128_type& data() const
+   {
+       return m_value;
+   }
 };
 
 inline BOOST_MP_CXX14_CONSTEXPR void eval_add(float128_backend& result, const float128_backend& a)
